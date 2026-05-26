@@ -61,7 +61,7 @@
                             <td>
                                 {% if u.is_superuser %}
                                     <span class="badge bg-danger px-3 py-2 shadow-sm"><i class="fas fa-crown me-1"></i>Admin / Superuser</span>
-                                {% elif u.agentes %}
+                                {% elif u.agente_set.exists %}
                                     <span class="badge bg-primary px-3 py-2 shadow-sm"><i class="fas fa-user-cog me-1"></i>Agente Técnico</span>
                                 {% else %}
                                     <span class="badge bg-success px-3 py-2 shadow-sm"><i class="fas fa-user me-1"></i>Cliente</span>
