@@ -67,17 +67,43 @@ def _get_reasignaciones_dict():
         print(f"Error obteniendo reasignaciones: {e}")
     return reasignaciones_dict
 
-def _crear_ticket_base(request, titulo, descripcion, cola_id, servicio_id, usuario):
+def _crear_ticket_base(request, titulo, descripcion, cola_id, servicio_id, usuario, gerencia_id=None):
     """Lógica común para crear un ticket."""
     cola = get_object_or_404(Tickets_Colas, id=cola_id)
     servicio = get_object_or_404(Tickets_Servicios, id=servicio_id)
 
+    # 1. Buscamos el perfil del cliente a través del CORREO (ya que no existe campo 'usuario' en Cliente)
+    cliente_vinculado = None
+    if usuario.email:
+        cliente_vinculado = Cliente.objects.filter(correo=usuario.email).first()
+
+    correo_reserva = usuario.email or f"{usuario.username}@emvepro.gob.ve"
+
+    # 2. PROCESAR LA GERENCIA DEL FORMULARIO
+    if gerencia_id:
+        gerencia_obj = Gerencia.objects.filter(id=gerencia_id).first()
+        if gerencia_obj:
+            if not cliente_vinculado:
+                # CUIDADO AQUÍ: Quitamos 'usuario=usuario' porque ese campo no existe en tu BD
+                cliente_vinculado = Cliente.objects.create(
+                    nombre=usuario.get_full_name() or usuario.username,
+                    correo=correo_reserva,
+                    gerencia=gerencia_obj
+                )
+            else:
+                # Si ya es cliente pero eligió otra gerencia, la actualizamos
+                if cliente_vinculado.gerencia != gerencia_obj:
+                    cliente_vinculado.gerencia = gerencia_obj
+                    cliente_vinculado.save()
+
+    # 3. Guardamos el ticket con su cliente vinculado
     nuevo_ticket = Tickets.objects.create(
         titulo=titulo,
         descripcion=descripcion,
         cola=cola,
         servicio=servicio,
         usuario=usuario,
+        cliente=cliente_vinculado,
     )
 
     try:
@@ -95,6 +121,66 @@ def _crear_ticket_base(request, titulo, descripcion, cola_id, servicio_id, usuar
         print(f"Error creando notificación de asignación: {e}")
 
     return nuevo_ticket
+
+@login_required
+def crear_tikects_clientes(request):
+    if request.method == 'GET':
+        servicios = Tickets_Servicios.objects.all()
+        colas = Tickets_Colas.objects.all()
+        gerencias = Gerencia.objects.all()
+        return render(request, 'tikects_crear.html', {
+            'servicios': servicios,
+            'colas': colas,
+            'gerencias': gerencias,
+        })
+    elif request.method == 'POST':
+        titulo = request.POST.get('titulo', '').strip()
+        descripcion = request.POST.get('descripcion', '').strip()
+        cola_id = request.POST.get('cola')
+        servicio_id = request.POST.get('servicio')
+        gerencia_id = request.POST.get('gerencia') # <--- CAPTURAMOS EL ID
+        usuario = request.user
+
+        if not all([titulo, descripcion, cola_id, servicio_id, gerencia_id]):
+            messages.error(request, "Todos los campos son obligatorios.")
+            return redirect('crear_tikects_clientes')
+
+        _crear_ticket_base(request, titulo, descripcion, cola_id, servicio_id, usuario, gerencia_id)
+        
+        messages.success(request, "Ticket creado exitosamente.")
+        return redirect('ver_mis_tikects')
+        
+    return redirect('crear_tikects_clientes')
+
+@login_required
+def crear_tikects(request):
+    if request.method == 'GET':
+        servicios = Tickets_Servicios.objects.all()
+        colas = Tickets_Colas.objects.all()
+        gerencias = Gerencia.objects.all()
+        return render(request, 'tikects_crear.html', {
+            'servicios': servicios,
+            'colas': colas,
+            'gerencias': gerencias
+        })
+    elif request.method == 'POST':
+        titulo = request.POST.get('titulo', '').strip()
+        descripcion = request.POST.get('descripcion', '').strip()
+        cola_id = request.POST.get('cola')
+        servicio_id = request.POST.get('servicio')
+        gerencia_id = request.POST.get('gerencia') # <--- CAPTURAMOS EL ID
+        usuario = request.user
+
+        if not all([titulo, descripcion, cola_id, servicio_id, gerencia_id]):
+            messages.error(request, "Todos los campos son obligatorios.")
+            return redirect('crear_tikects')
+
+        _crear_ticket_base(request, titulo, descripcion, cola_id, servicio_id, usuario, gerencia_id)
+        
+        messages.success(request, "Ticket creado exitosamente.")
+        return redirect('ver_tikects')
+        
+    return redirect('crear_tikects')
 
 def generar_correo_institucional(first_name, last_name):
     """Genera correo institucional automáticamente."""
@@ -673,11 +759,14 @@ def usuarios_clientes_grupos_crear(request):
             return redirect('usuarios_clientes_grupos')
     return render(request, 'usuarios_clientes_grupos_crear.html')
 
-@superuser_required
 @login_required
+@superuser_required
 def ver_gerencias(request):
-    gerencias = Gerencia.objects.all()
-    return render(request, 'gerencias.html', {'gerencias': gerencias})
+    # 'lista_gerencias' es la variable que enviaremos al HTML
+    lista_gerencias = Gerencia.objects.all().order_by('nombre')
+    return render(request, 'gerencias.html', {
+        'gerencias': lista_gerencias
+    })
 
 @superuser_required
 @login_required
@@ -761,18 +850,34 @@ def ver_tikects_abiertos(request):
 
 @login_required
 def detalle_tikect(request, tikect_id):
-    tikect = get_object_or_404(Tickets.objects.select_related('usuario', 'servicio', 'cola', 'cerrado_por_agente__usuario'), id=tikect_id)
+    # Se añade 'cliente__gerencia' al select_related para traer la jerarquía completa
+    # y evitar consultas adicionales al acceder a la gerencia en el template.
+    tikect = get_object_or_404(
+        Tickets.objects.select_related(
+            'usuario', 
+            'servicio', 
+            'cola', 
+            'cerrado_por_agente__usuario', 
+            'cliente__gerencia'
+        ), 
+        id=tikect_id
+    )
     
+    # Marcamos notificaciones como leídas
     Notificaciones.objects.filter(tikect=tikect, agente__usuario=request.user).update(leida=True)
 
+    # Lógica de cierre mediante POST
     if request.method == 'POST' and request.POST.get('accion') == 'cerrar':
         tikect.estado = 'cerrado'
         tikect.save()
+        
+        # Redirección según el rol del usuario
         if hasattr(request.user, 'agente'):
             return redirect('ver_tikects_asignados_agentes')
         else:
             return redirect('ver_tikects')
 
+    # Lógica de verificación de reasignación
     reasignado = False
     if hasattr(request.user, 'agente'):
         reasignado = ReasignacionTikects.objects.filter(
@@ -785,38 +890,44 @@ def detalle_tikect(request, tikect_id):
         'reasignado': reasignado
     })
 
-@login_required
+@agente_or_superuser_required  # <--- EL CANDADO REAL
 def cerrar_tikect(request, tikect_id):
-    tikect = get_object_or_404(Tickets, id=tikect_id)
+    # Optimizamos la carga para incluir el usuario relacionado
+    tikect = get_object_or_404(Tickets.objects.select_related('usuario'), id=tikect_id)
+    # ...
     if request.method == 'POST':
         descripcion_solucion = request.POST.get('descripcion_solucion', '').strip()
+        
+        # Actualizamos campos de cierre
         tikect.estado = 'cerrado'
         tikect.fecha_cierre = timezone.now()
         tikect.descripcion_solucion = descripcion_solucion
         
-        if hasattr(request.user, 'agente'):
-            tikect.cerrado_por_agente = request.user.agente
-        else:
-            tikect.cerrado_por_agente = Agentes.objects.filter(usuario=request.user).first()
+        # Intentamos obtener el agente de forma más segura
+        # Primero buscamos en la relación directa, si no, buscamos en el modelo Agentes
+        agente_actual = getattr(request.user, 'agente', None)
+        if not agente_actual:
+            agente_actual = Agentes.objects.filter(usuario=request.user).first()
             
+        tikect.cerrado_por_agente = agente_actual
         tikect.save()
         
+        # Notificación por email
         if tikect.usuario and tikect.usuario.email:
-            asunto = f"Ticket Cerrado: #{tikect.id} - {tikect.titulo}"
-            mensaje = f"Hola {tikect.usuario.first_name},\n\nTu ticket ha sido marcado como CERRADO.\nSolución aplicada: {descripcion_solucion or 'No especificada'}"
             send_mail(
-                asunto,
-                mensaje,
-                settings.DEFAULT_FROM_EMAIL,
-                [tikect.usuario.email],
+                subject=f"Ticket Cerrado: #{tikect.id} - {tikect.titulo}",
+                message=f"Hola {tikect.usuario.first_name},\n\nTu ticket ha sido marcado como CERRADO.\nSolución aplicada: {descripcion_solucion or 'No especificada'}",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[tikect.usuario.email],
                 fail_silently=True,
             )
 
         messages.success(request, "Ticket cerrado exitosamente.")
-        if hasattr(request.user, 'agente'):
+        
+        # Redirección basada en si el usuario es agente o no
+        if agente_actual:
             return redirect('ver_tikects_asignados_agentes')
-        else:
-            return redirect('ver_tikects')
+        return redirect('ver_tikects')
             
     return redirect('detalle_tikect', tikect_id=tikect.id)
 
@@ -873,46 +984,40 @@ def reasignar_tikect(request, tikect_id):
     })
 
 # ============================================
-# TICKETS - VISTAS PARA CLIENTES
+# TICKETS - VISTAS PARA CLIENTES (CORREGIDAS)
 # ============================================
 
 @login_required
 def ver_mis_tikects(request):
-    # 🚫 Restricción para resolutores: No se les permite ver este historial
-    if request.user.is_superuser or hasattr(request.user, 'agente') or hasattr(request.user, 'Agentes'):
+    # 🚫 Restricción para resolutores
+    if request.user.is_superuser or Agentes.objects.filter(usuario=request.user).exists():
         return redirect('pagina_principal')
 
-
+    # Filtramos por el cliente relacionado al usuario
     tikects = Tickets.objects.filter(usuario=request.user).select_related('servicio', 'cola').order_by('-fecha_creacion')
+    
     paginator = Paginator(tikects, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator.get_page(request.GET.get('page'))
     return render(request, 'tikects_vista_lista_cliente.html', {'page_obj': page_obj})
 
 @login_required
 def ver_mis_tikects_cerrados(request):
-    # 🚫 Restricción para resolutores: No se les permite ver este historial
-    if request.user.is_superuser or hasattr(request.user, 'agente') or hasattr(request.user, 'Agentes'):
+    if request.user.is_superuser or Agentes.objects.filter(usuario=request.user).exists():
         return redirect('pagina_principal')
 
-
-    tikects = Tickets.objects.filter(usuario=request.user, estado='cerrado').select_related('servicio', 'cola').order_by('-fecha_creacion')
+    tikects = Tickets.objects.filter(usuario=request.user, estado__iexact='cerrado').select_related('servicio', 'cola').order_by('-fecha_creacion')
     paginator = Paginator(tikects, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator.get_page(request.GET.get('page'))
     return render(request, 'tikects_vista_lista_cliente.html', {'page_obj': page_obj})
 
 @login_required
 def ver_mis_tikects_abiertos(request):
-    # 🚫 Restricción para resolutores: No se les permite ver este historial
-    if request.user.is_superuser or hasattr(request.user, 'agente') or hasattr(request.user, 'Agentes'):
+    if request.user.is_superuser or Agentes.objects.filter(usuario=request.user).exists():
         return redirect('pagina_principal')
 
-
-    tikects = Tickets.objects.filter(usuario=request.user).exclude(estado='cerrado').select_related('servicio', 'cola').order_by('-fecha_creacion')
+    tikects = Tickets.objects.filter(usuario=request.user).exclude(estado__iexact='cerrado').select_related('servicio', 'cola').order_by('-fecha_creacion')
     paginator = Paginator(tikects, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator.get_page(request.GET.get('page'))
     return render(request, 'tikects_vista_lista_cliente.html', {'page_obj': page_obj})
 
 @login_required

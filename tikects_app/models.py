@@ -105,6 +105,7 @@ class Grupos_Clientes(models.Model):
         return self.nombre
 
 class Cliente(models.Model):
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     nombre = models.CharField(max_length=200)
     correo = models.EmailField()
     telefono = models.CharField(max_length=20, blank=True, null=True)

@@ -27,13 +27,15 @@ urlpatterns = [
         path('inicio/', clientes.DashboardClientesView.as_view(), name='dashboard'),
     ], 'clientes'))),
 
-# 🛠️ ENTORNO DE SOPORTE / RESOLUTORES (Namespaces)
+    # 🛠️ ENTORNO DE SOPORTE / RESOLUTORES (Namespaces)
     path('soporte/', include(([
         path('dashboard/', agentes.DashboardSoporteView.as_view(), name='dashboard'),
-        path('triage/', mapear_vista('mesa_triage'), name='triage'), # 🔑 ¡AQUÍ ESTÁ LA CLAVE!
+        path('triage/', mapear_vista('mesa_triage'), name='triage'),
     ], 'soporte'))),
+    
     # Registro plano para que 'mesa_triage' sea encontrado globalmente
     path('mesa-triage/', mapear_vista('mesa_triage'), name='mesa_triage'),
+    
     # 🔄 ALIAS DE COMPATIBILIDAD CON PLANTILLAS HTML
     path('soporte/main/', agentes.DashboardSoporteView.as_view(), name='pagina_principal'),
     path('portal/main/', clientes.DashboardClientesView.as_view(), name='pagina_principal_clientes'),
@@ -67,7 +69,6 @@ urlpatterns = [
     path('usuario/clientes_grupos/crear/', mapear_vista('usuarios_clientes_grupos_crear'), name='crear_grupo'),
     path('clientes/gerencias/', mapear_vista('ver_gerencias'), name='ver_gerencias'),
     path('clientes/gerencias/crear/', mapear_vista('crear_gerencia'), name='crear_gerencia'),
-    # 🔑 CORRECCIÓN: Se cambió 'pagina_clientes' por 'clientes' para que abra el CRUD real
     path('admin-panel/clientes-base/', mapear_vista('clientes'), name='clientes'),
 
     # MANTENIMIENTOS CRUD: AGENTES Y GRUPOS
@@ -77,14 +78,12 @@ urlpatterns = [
     path('usuarios/grupos_agentes/crear', mapear_vista('usuarios_grupos_agentes_crear'), name='usuarios_grupos_agentes_crear'),
     path('usuarios/grupos_agentes/agentes', mapear_vista('usuarios_por_grupos_agentes'), name='usuarios_por_grupos_agentes'),
     path('usuarios/grupos_agentes/agregar', mapear_vista('usuarios_grupos_agentes_agregar'), name='usuarios_grupos_agentes_agregar'),
-    # 🔑 CORRECCIÓN: Rutas de borrado faltantes agregadas
     path('grupos_agentes/eliminar/<int:grupo_id>/', mapear_vista('usuariops_grupo_agentes_eliminar'), name='eliminar_grupo_agentes'),
     path('grupos_agentes/eliminar_del_grupo/<int:grupo_agente_id>/', mapear_vista('eliminar_agente_de_grupo'), name='eliminar_agente_de_grupo'),
 
     path('ver-agentes-genericos/', mapear_vista('ver_agentes_genericos'), name='ver_agentes_genericos'),
     path('usuario/agente_generico/', mapear_vista('agente_generico'), name='agente_generico'),
-    path('asignaciones/eliminar/<int:asignacion_id>/', mapear_vista('eliminar_asignacion'), name='eliminar_asignacion'), # <-- Faltaba
-    # 🔑 CORRECCIÓN: Enganchamos la vista avanzada dinámica y su procesador de cambios
+    path('asignaciones/eliminar/<int:asignacion_id>/', mapear_vista('eliminar_asignacion'), name='eliminar_asignacion'),
     path('usuarios/permisos', mapear_vista('panel_permisos_roles'), name='panel_permisos_roles'),
     path('usuarios/permisos/actualizar/<int:usuario_id>/', mapear_vista('actualizar_rol_usuario'), name='actualizar_rol_usuario'),
 
@@ -95,18 +94,19 @@ urlpatterns = [
     path('clientes/exportar-excel/', mapear_vista('exportar_usuarios_excel'), name='exportar_excel'),
 
     # 📑 ACCIONES DINÁMICAS Y FLUJOS CON IDs
-# 📑 ACCIONES DINÁMICAS Y FLUJOS CON IDs
     path('tikects/detalles/<int:tikect_id>/', mapear_vista('detalle_tikect'), name='detalle_tikect'),
     path('tikects/<int:tikect_id>/cerrar/', mapear_vista('cerrar_tikect'), name='cerrar_tikect'),
-    
-    # 🚀 AÑADE ESTA LÍNEA AQUÍ MISMO:
     path('procesar-triage/<int:ticket_id>/', mapear_vista('procesar_triage'), name='procesar_triage'),
     
     path('tikects/ver_todos/cerrados/', mapear_vista('ver_tikects_cerrados'), name='ver_tikects_cerrados'),
     path('tikects/ver_todos/abiertos/', mapear_vista('ver_tikects_abiertos'), name='ver_tikects_abiertos'),
-    path('tikects/asignados_agentes/', mapear_vista('ver_tikects_asignados_agentes'), name='ver_tikects_asignados_agentes'),
-    path('reasignar_tikect/<int:tikect_id>/', mapear_vista('reasignar_tikect'), name='reasignar_tikect'),
     
+    # 🔄 RUTAS DE BANDEJA DE AGENTES CORREGIDAS
+    path('tikects/asignados_agentes/', mapear_vista('ver_tikects_asignados_agentes'), name='ver_tikects_asignados_agentes'),
+    path('tikects/asignados_agentes/abiertos/', mapear_vista('ver_tikects_asignados_agentes_abiertos'), name='ver_tikects_asignados_agentes_abiertos'),
+    path('tikects/asignados_agentes/cerrados/', mapear_vista('ver_tikects_asignados_agentes_cerrados'), name='ver_tikects_asignados_agentes_cerrados'),
+    
+    path('reasignar_tikect/<int:tikect_id>/', mapear_vista('reasignar_tikect'), name='reasignar_tikect'),
     path('clientes/editar/<int:cliente_id>/', mapear_vista('editar_cliente'), name='editar_cliente'),
     path('clientes/eliminar/<int:cliente_id>/', mapear_vista('eliminar_cliente'), name='eliminar_cliente'),
     path('gerencias/editar/<int:gerencia_id>/', mapear_vista('editar_gerencia'), name='editar_gerencia'),
@@ -115,6 +115,8 @@ urlpatterns = [
     path('agentes/eliminar/<int:agente_id>/', mapear_vista('eliminar_agente'), name='eliminar_agente'),
 
     path('tikects/cliente_ver_mis_tikects/', mapear_vista('ver_mis_tikects'), name='ver_mis_tikects'),
+    path('tikects/mis_abiertos/', mapear_vista('ver_mis_tikects_abiertos'), name='ver_mis_tikects_abiertos'),
+    path('tikects/mis_cerrados/', mapear_vista('ver_mis_tikects_cerrados'), name='ver_mis_tikects_cerrados'),
     path('tikects/crear_cliente_tikects/', mapear_vista('crear_tikects_clientes'), name='crear_tikects_clientes'),
     path('path/to/your/notification/api/', mapear_vista('check_notifications'), name='check_notifications'),
 
