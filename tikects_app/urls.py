@@ -80,7 +80,7 @@ urlpatterns = [
     path('usuarios/grupos_agentes/agregar', mapear_vista('usuarios_grupos_agentes_agregar'), name='usuarios_grupos_agentes_agregar'),
     path('grupos_agentes/eliminar/<int:grupo_id>/', mapear_vista('usuariops_grupo_agentes_eliminar'), name='eliminar_grupo_agentes'),
     path('grupos_agentes/eliminar_del_grupo/<int:grupo_agente_id>/', mapear_vista('eliminar_agente_de_grupo'), name='eliminar_agente_de_grupo'),
-
+    path('grupos/editar/<int:id>/', vistas_legado.editar_grupo, name='editar_grupo'),
     path('ver-agentes-genericos/', mapear_vista('ver_agentes_genericos'), name='ver_agentes_genericos'),
     path('usuario/agente_generico/', mapear_vista('agente_generico'), name='agente_generico'),
     path('asignaciones/eliminar/<int:asignacion_id>/', mapear_vista('eliminar_asignacion'), name='eliminar_asignacion'),
