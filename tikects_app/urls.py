@@ -1,9 +1,11 @@
+from django import views
 from django.urls import path, include
 from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 from tikects_app import vistas_legado
 from tikects_app.views import core, clientes, agentes, admin
-
+# Busca esta línea al principio del archivo y cámbiala por:
+from . import vistas_configuracion as views
 # 🔒 IMPORTAMOS EL ESCUDO DE SEGURIDAD
 from tikects_app.decoradores import solo_clientes_permitido
 
@@ -64,9 +66,9 @@ urlpatterns = [
     path('configuracion/colas/editar/<int:cola_id>/', mapear_vista('editar_cola'), name='editar_cola'),
     path('configuracion/colas/eliminar/<int:cola_id>/', mapear_vista('eliminar_cola'), name='eliminar_cola'),
 
-    path('configuracion/respuestas/', mapear_vista('tikects_respuestas_automaticas'), name='tikects_respuestas_automaticas'),
-    path('configuracion/respuestas/crear/', mapear_vista('tikects_respuestas_automaticas_crear'), name='tikects_respuestas_automaticas_crear'),
-    path('configuracion/respuestas/eliminar/<int:respuesta_id>/', mapear_vista('eliminar_respuesta_automatica'), name='eliminar_respuesta_automatica'),
+    #path('configuracion/respuestas/', mapear_vista('tikects_respuestas_automaticas'), name='tikects_respuestas_automaticas'),
+    #path('configuracion/respuestas/crear/', mapear_vista('tikects_respuestas_automaticas_crear'), name='tikects_respuestas_automaticas_crear'),
+    #path('configuracion/respuestas/eliminar/<int:respuesta_id>/', mapear_vista('eliminar_respuesta_automatica'), name='eliminar_respuesta_automatica'),
 
     # MANTENIMIENTOS CRUD: CLIENTES, GRUPOS Y GERENCIAS
     path('configuracion/registrar/', mapear_vista('registrar_usuarios'), name='registrar_usuarios'),
@@ -113,7 +115,9 @@ urlpatterns = [
     
     path('tikects/ver_todos/cerrados/', mapear_vista('ver_tikects_cerrados'), name='ver_tikects_cerrados'),
     path('tikects/ver_todos/abiertos/', mapear_vista('ver_tikects_abiertos'), name='ver_tikects_abiertos'),
-    
+    # Ejemplo de cómo debería lucir en urls.py
+    path('configuracion/respuestas/crear/', views.crear_respuesta, name='tickets_repuesta_automaticas_crear'),
+    path('configuracion/respuestas/lista/', views.lista_respuestas, name='tickets_repuesta_automaticas_lista'),
     # 🔄 RUTAS DE BANDEJA DE AGENTES CORREGIDAS
     path('tikects/asignados_agentes/', mapear_vista('ver_tikects_asignados_agentes'), name='ver_tikects_asignados_agentes'),
     path('tikects/asignados_agentes/abiertos/', mapear_vista('ver_tikects_asignados_agentes_abiertos'), name='ver_tikects_asignados_agentes_abiertos'),

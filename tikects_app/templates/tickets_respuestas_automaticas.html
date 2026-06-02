@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between mb-4">
+        <h2 class="fw-bold"><i class="fas fa-robot text-primary me-2"></i> Respuestas Automáticas</h2>
+        <a href="{% url 'crear_respuesta' %}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="fas fa-plus me-1"></i> Nueva Respuesta
+        </a>
+    </div>
+
+    <div class="glass-card p-4">
+        <table class="table table-hover align-middle">
+            <thead class="text-muted small text-uppercase">
+                <tr><th>Nombre</th><th>Asunto</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+                {% for r in respuestas %}
+                <tr>
+                    <td><strong class="text-dark">{{ r.nombre }}</strong></td>
+                    <td>{{ r.asunto }}</td>
+                    <td><button class="btn btn-sm btn-outline-danger rounded-pill">Eliminar</button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

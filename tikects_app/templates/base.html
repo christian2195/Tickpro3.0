@@ -14,9 +14,8 @@
         body { background-color: #f4f7f6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
         .navbar { 
-            background: rgba(44, 62, 80, 0.75) !important; 
+            background: rgba(44, 62, 80, 0.85) !important; 
             backdrop-filter: blur(25px) saturate(180%); 
-            -webkit-backdrop-filter: blur(25px) saturate(180%); 
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); 
         }
         
@@ -27,12 +26,8 @@
             border-radius: 16px; 
             border: 1px solid rgba(255,255,255,0.3); 
             backdrop-filter: blur(20px); 
-            background: rgba(255,255,255,0.9); 
-            animation: fadeInUp 0.3s ease; 
+            background: rgba(255,255,255,0.95); 
         }
-        
-        main { animation: fadeIn 0.6s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         .footer-perla { background-color: rgba(248, 249, 250, 0.9); border-top: 1px solid rgba(0,0,0,0.05); padding: 25px 0; }
         .footer-text { color: #6c757d; font-weight: 600; font-size: 0.85rem; }
@@ -42,7 +37,6 @@
             backdrop-filter: blur(10px); 
             border: 1px solid rgba(255,255,255,0.3); 
             border-radius: 16px; 
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07); 
         }
     </style>
 </head>
@@ -74,6 +68,8 @@
                                     <li><a class="dropdown-item" href="{% url 'usuarios_agentes' %}">Agentes</a></li>
                                     <li><a class="dropdown-item" href="{% url 'panel_permisos_roles' %}">Gestión de Permisos</a></li>
                                     <li><a class="dropdown-item" href="{% url 'clientes' %}">Clientes</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'tickets_repuesta_automaticas_lista' %}"><i class="fas fa-robot me-2 text-primary"></i>Respuestas Automáticas</a></li>
                                 </ul>
                             </li>
                             {% endif %}

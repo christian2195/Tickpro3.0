@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Nueva Respuesta | Tickpro 3.0{% endblock %}
+
+{% block content %}
+<div class="container-fluid animate__animated animate__fadeIn">
+    <div class="col-md-8 mx-auto">
+        <div class="glass-card p-4">
+            <h5 class="fw-bold mb-4"><i class="fas fa-robot me-2 text-primary"></i> Configurar nueva respuesta</h5>
+            
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Nombre Interno</label>
+                    <input name="nombre" class="form-control rounded-pill" required placeholder="Ej: Cierre de Ticket Técnico">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Asunto del Correo</label>
+                    <input name="asunto" class="form-control rounded-pill" required placeholder="Ej: Ticket Resuelto - TickPro">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Cuerpo del Mensaje</label>
+                    <textarea name="cuerpo" class="form-control rounded-3" rows="6" required placeholder="Escriba el contenido del mensaje automático..."></textarea>
+                </div>
+                
+                <div class="text-end">
+                    <a href="{% url 'tickets_repuesta_automaticas_lista' %}" class="btn btn-outline-secondary rounded-pill px-4 me-2">Cancelar</a>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Guardar Respuesta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

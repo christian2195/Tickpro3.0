@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Respuestas Automáticas | Tickpro 3.0{% endblock %}
+
+{% block content %}
+<div class="container-fluid animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-robot me-2 text-primary"></i> Respuestas Automáticas</h2>
+        <a href="{% url 'tickets_repuesta_automaticas_crear' %}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="fas fa-plus me-1"></i> Crear Nueva
+        </a>
+    </div>
+
+    <div class="glass-card p-4">
+        <table class="table table-hover align-middle">
+            <thead class="text-muted small text-uppercase">
+                <tr><th>Nombre</th><th>Asunto</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+                {% for r in respuestas %}
+                <tr>
+                    <td><strong class="text-dark">{{ r.nombre }}</strong></td>
+                    <td>{{ r.asunto }}</td>
+                    <td>
+                        <a href="{% url 'eliminar_respuesta_automatica' r.id %}" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center py-4 text-muted">No hay respuestas configuradas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
