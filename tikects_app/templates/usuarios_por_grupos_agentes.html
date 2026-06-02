@@ -1,99 +1,108 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Usuarios por Grupo | Tickpro 3.0{% endblock %}
 
 {% block content %}
-    <div class="container mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="text-primary">
-                <i class="fas fa-users-cog me-2"></i> Usuarios por Grupo
-            </h2>
-            <a href="{% url 'usuarios_grupos_agentes_agregar' %}" class="btn btn-primary shadow-sm">
-                <i class="fas fa-user-plus me-2"></i> Agregar Usuario a Grupo
-            </a>
-        </div>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+    .table-modern { border-collapse: separate; border-spacing: 0 10px; }
+    .table-modern tbody tr { background: white; border-radius: 12px; }
+    .table-modern tbody td { padding: 15px; border: none; }
+</style>
 
-        {% for grupo in grupos %}
-            <div class="card mb-4 shadow-sm border-0">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center py-3">
-                    <h5 class="mb-0">
-                        <i class="fas fa-layer-group me-2"></i> {{ grupo.nombre }}
-                    </h5>
-                    <span class="badge bg-white text-success rounded-pill px-3">
-                        {{ grupo.agentes_por_grupos_set.count }} miembros
-                    </span>
-                </div>
-                
-                <div class="card-body p-0">
-                    {% if grupo.agentes_por_grupos_set.all %}
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4">#</th>
-                                <th>Nombre de Usuario</th>
-                                <th>Correo Electrónico</th>
-                                <th class="text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for grupo_agente in grupo.agentes_por_grupos_set.all %}
-                            <tr>
-                                <td class="ps-4 text-muted">{{ forloop.counter }}</td>
-                                <td><strong>{{ grupo_agente.agente.usuario.username }}</strong></td>
-                                <td>{{ grupo_agente.agente.usuario.email|default:"No registrado" }}</td>
-                                <td class="text-center">
-                                    <button type="button" class="btn btn-outline-danger btn-sm" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#confirmModal" 
-                                            data-grupo-agente-id="{{ grupo_agente.id }}">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <div class="p-4 text-center text-muted">
-                        <i class="fas fa-info-circle me-2"></i> No hay usuarios asignados a este grupo.
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        {% empty %}
-            <div class="alert alert-warning text-center">
-                <i class="fas fa-exclamation-triangle me-2"></i> No hay grupos definidos en el sistema.
-            </div>
-        {% endfor %}
+<div class="container-fluid animate__animated animate__fadeIn">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-users-cog me-2 text-primary"></i> Usuarios por Grupo</h2>
+        <a href="{% url 'usuarios_grupos_agentes_agregar' %}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="fas fa-user-plus me-2"></i> Agregar Usuario
+        </a>
     </div>
 
-    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Confirmar eliminación</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    ¿Estás seguro de que deseas retirar a este agente del grupo?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <form id="deleteForm" method="post" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Confirmar retiro</button>
-                    </form>
-                </div>
+    <!-- Grupos -->
+    {% for grupo in grupos %}
+    <div class="glass-card mb-4 overflow-hidden">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light bg-opacity-50">
+            <h5 class="fw-bold mb-0 text-primary">
+                <i class="fas fa-layer-group me-2"></i> {{ grupo.nombre }}
+            </h5>
+            <span class="badge rounded-pill bg-primary px-3">
+                {{ grupo.agentes_por_grupos_set.count }} miembros
+            </span>
+        </div>
+        
+        <div class="p-0">
+            {% if grupo.agentes_por_grupos_set.all %}
+            <table class="table table-modern align-middle mb-0">
+                <thead class="text-muted small text-uppercase">
+                    <tr><th class="ps-4">Usuario</th><th>Correo Electrónico</th><th class="text-center">Acción</th></tr>
+                </thead>
+                <tbody>
+                    {% for grupo_agente in grupo.agentes_por_grupos_set.all %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark">{{ grupo_agente.agente.usuario.username }}</td>
+                        <td class="text-muted">{{ grupo_agente.agente.usuario.email|default:"No registrado" }}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" 
+                                    data-bs-toggle="modal" data-bs-target="#confirmModal" 
+                                    data-grupo-agente-id="{{ grupo_agente.id }}">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="p-4 text-center text-muted small">
+                <i class="fas fa-info-circle me-1"></i> No hay usuarios asignados a este grupo.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-warning rounded-pill text-center">
+        <i class="fas fa-exclamation-triangle me-2"></i> No hay grupos definidos en el sistema.
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirmar retiro</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                ¿Estás seguro de que deseas retirar a este agente del grupo?
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">Confirmar</button>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        var confirmModal = document.getElementById('confirmModal');
-        confirmModal.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget;
-            var id = button.getAttribute('data-grupo-agente-id');
-            var deleteForm = document.getElementById('deleteForm');
-            // Asegúrate de que el nombre 'eliminar_agente_de_grupo' coincida con tu urls.py
-            deleteForm.action = '{% url "eliminar_agente_de_grupo" 0 %}'.replace('0', id);
-        });
-    </script>
+<script>
+    var confirmModal = document.getElementById('confirmModal');
+    confirmModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var id = button.getAttribute('data-grupo-agente-id');
+        var deleteForm = document.getElementById('deleteForm');
+        deleteForm.action = '{% url "eliminar_agente_de_grupo" 0 %}'.replace('0', id);
+    });
+</script>
 {% endblock %}

@@ -1,114 +1,80 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Editar Grupo{% endblock %}
+{% block title %}Editar Grupo | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<!-- Carga de estilos y scripts de Select2 -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
-<div class="page-header">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1>
-                <i class="fas fa-users-cog me-3"></i> EDITAR GRUPO
-            </h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'configuracion' %}">Configuración</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'usuarios_grupos_agentes' %}">Grupos de Agentes</a></li>
-                    <li class="breadcrumb-item active">Editar Grupo</li>
-                </ol>
-            </nav>
-        </div>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+</style>
+
+<div class="container-fluid animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-users-cog me-2 text-primary"></i> Editar Grupo</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'configuracion' %}" class="text-decoration-none">Configuración</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'usuarios_grupos_agentes' %}" class="text-decoration-none">Grupos</a></li>
+                <li class="breadcrumb-item active text-primary fw-bold">Editar</li>
+            </ol>
+        </nav>
     </div>
-</div>
 
-<div class="container">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i> Datos del Grupo</h5>
-        </div>
-        <div class="card-body">
-            <form method="post" class="needs-validation" novalidate>
-                {% csrf_token %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="glass-card p-4">
+                <h5 class="fw-bold mb-4"><i class="fas fa-layer-group me-2 text-primary"></i> Modificar datos y agentes</h5>
                 
-                <div class="row">
-                    <!-- Nombre del Grupo -->
-                    <div class="col-md-12 mb-3">
-                        <label for="nombre" class="form-label">Nombre del Grupo <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="nombre" name="nombre" 
-                               value="{{ grupo.nombre }}" placeholder="Ej: Soporte Técnico" required>
-                        <div class="invalid-feedback">El nombre del grupo es obligatorio.</div>
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre del Grupo <span class="text-danger">*</span></label>
+                        <input type="text" name="nombre" class="form-control rounded-pill" value="{{ grupo.nombre }}" required>
                     </div>
 
-                    <!-- Descripción -->
-                    <div class="col-md-12 mb-3">
-                        <label for="descripcion" class="form-label">Descripción <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="descripcion" name="descripcion" 
-                                  rows="4" placeholder="Describa el propósito de este grupo" required>{{ grupo.descripcion }}</textarea>
-                        <div class="invalid-feedback">La descripción es obligatoria.</div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Descripción <span class="text-danger">*</span></label>
+                        <textarea name="descripcion" class="form-control rounded-3" rows="3" required>{{ grupo.descripcion }}</textarea>
                     </div>
 
-                    <!-- Asignación de Agentes con Select2 -->
-                    <div class="col-md-12 mb-3">
-                        <label for="agentes" class="form-label">Asignar Agentes al Grupo</label>
-                        <select class="form-select select2-agentes" id="agentes" name="agentes" multiple="multiple" style="width: 100%;">
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Asignar Agentes</label>
+                        <select class="form-select select2-agentes" name="agentes" multiple="multiple" style="width: 100%;">
                             {% for agente in todos_los_agentes %}
                                 <option value="{{ agente.id }}" {% if agente.id in agentes_del_grupo %}selected{% endif %}>
                                     {{ agente.nombre_usuario }} - {{ agente.correo }}
                                 </option>
                             {% endfor %}
                         </select>
-                        <div class="form-text">
-                            <i class="fas fa-search me-1"></i> Escribe para buscar agentes y agrégalos al grupo.
-                        </div>
                     </div>
-                </div>
 
-                <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle me-2"></i> Los grupos permiten organizar agentes con funciones similares y facilitan la reasignación de tickets.
-                </div>
-
-                <div class="text-end mt-4">
-                    <a href="{% url 'usuarios_grupos_agentes' %}" class="btn btn-secondary me-2">
-                        <i class="fas fa-arrow-left me-2"></i> Cancelar
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i> Guardar Cambios
-                    </button>
-                </div>
-            </form>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'usuarios_grupos_agentes' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                            <i class="fas fa-save me-2"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Scripts de Select2 -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('.select2-agentes').select2({
-            theme: 'bootstrap-5',
-            placeholder: "Selecciona agentes...",
-            allowClear: true
-        });
+        $('.select2-agentes').select2({ theme: 'bootstrap-5', placeholder: "Selecciona agentes..." });
     });
-
-    // Validación de formulario Bootstrap
-    (function() {
-        'use strict';
-        var forms = document.querySelectorAll('.needs-validation');
-        Array.prototype.slice.call(forms).forEach(function(form) {
-            form.addEventListener('submit', function(event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-                form.classList.add('was-validated');
-            }, false);
-        });
-    })();
 </script>
 {% endblock %}

@@ -4,141 +4,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}EMVEPRO - Tickpro 2.0{% endblock %}</title>
+    <title>{% block title %}Tickpro 3.0 | EMVEPRO{% endblock %}</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'tikects_app/styles.css' %}?v=3">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     
     <style>
-        .btn-perfil-navbar {
-            background-color: rgba(255, 255, 255, 0.15) !important;
-            color: #ffffff !important;
-            border: 1px solid rgba(255, 255, 255, 0.25) !important;
-            transition: all 0.2s ease-in-out;
+        body { background-color: #f4f7f6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        
+        .navbar { 
+            background: rgba(44, 62, 80, 0.75) !important; 
+            backdrop-filter: blur(25px) saturate(180%); 
+            -webkit-backdrop-filter: blur(25px) saturate(180%); 
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); 
         }
-        .btn-perfil-navbar:hover, .btn-perfil-navbar:focus {
-            background-color: rgba(255, 255, 255, 0.3) !important;
-            color: #ffffff !important;
-            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
+        
+        .nav-link { color: rgba(255,255,255,0.9) !important; font-weight: 500; transition: 0.3s; }
+        .nav-link:hover { color: #fff !important; }
+        
+        .dropdown-menu { 
+            border-radius: 16px; 
+            border: 1px solid rgba(255,255,255,0.3); 
+            backdrop-filter: blur(20px); 
+            background: rgba(255,255,255,0.9); 
+            animation: fadeInUp 0.3s ease; 
         }
-        .btn-perfil-navbar i {
-            color: rgba(255, 255, 255, 0.9) !important;
+        
+        main { animation: fadeIn 0.6s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .footer-perla { background-color: rgba(248, 249, 250, 0.9); border-top: 1px solid rgba(0,0,0,0.05); padding: 25px 0; }
+        .footer-text { color: #6c757d; font-weight: 600; font-size: 0.85rem; }
+        
+        .card-modern { 
+            background: rgba(255, 255, 255, 0.9); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255,255,255,0.3); 
+            border-radius: 16px; 
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07); 
         }
     </style>
 </head>
-<body class="bg-light d-flex flex-column min-vh-100">
+<body class="d-flex flex-column min-vh-100">
 
-    <nav class="navbar navbar-expand-lg emvepro-navbar shadow-sm sticky-top">
+    <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container-fluid px-4">
-            
-            {% if user.is_authenticated %}
-                {% if user.is_superuser or agente %}
-                    <a class="navbar-brand d-flex align-items-center" href="{% url 'soporte:dashboard' %}">
-                {% else %}
-                    <a class="navbar-brand d-flex align-items-center" href="{% url 'clientes:dashboard' %}">
-                {% endif %}
-            {% else %}
-                <a class="navbar-brand d-flex align-items-center" href="{% url 'inicio' %}">
-            {% endif %}
-                <img src="{% static 'tikects_app/logo_emvepro.png' %}" alt="EMVEPRO" height="40" class="me-2 bg-white rounded p-1 shadow-sm">
-                <span class="text-white fw-bold d-none d-sm-block">Tickpro 2.0</span>
+            <a class="navbar-brand d-flex align-items-center" href="{% if user.is_authenticated %}{% url 'soporte:dashboard' %}{% else %}{% url 'inicio' %}{% endif %}">
+                <img src="{% static 'tikects_app/logo_emvepro.png' %}" height="40" class="bg-white rounded p-1 me-2 shadow-sm">
+                <span class="text-white fw-bold">Tickpro <small class="fw-light text-white-50">3.0</small></span>
             </a>
             
-            <button class="navbar-toggler border-white text-white" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
-                <i class="fas fa-bars"></i>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <i class="fas fa-bars text-white"></i>
             </button>
 
-            <div class="collapse navbar-collapse" id="menuPrincipal">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-4">
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav me-auto ms-4">
                     {% if user.is_authenticated %}
-                        
                         {% if user.is_superuser or agente %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'soporte:dashboard' %}"><i class="fas fa-home me-1"></i> Inicio</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/soporte/triage/"><i class="fas fa-filter me-1"></i> Triage</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'estadisticas' %}"><i class="fas fa-chart-line me-1"></i> Estadísticas</a>
-                            </li>
-                            
+                            <li class="nav-item"><a class="nav-link" href="{% url 'soporte:dashboard' %}"><i class="fas fa-home me-1"></i> Inicio</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/soporte/triage/"><i class="fas fa-filter me-1"></i> Triage</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{% url 'estadisticas' %}"><i class="fas fa-chart-line me-1"></i> Stats</a></li>
                             {% if user.is_superuser %}
-                            <li class="nav-item dropdown ms-lg-2 border-lg-start border-light ps-lg-2">
-                                <a class="nav-link dropdown-toggle" href="#" id="adminMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-cogs me-1"></i> Admin
-                                </a>
-                                <ul class="dropdown-menu shadow-sm animate fade-in">
-                                    <li><a class="dropdown-item" href="{% url 'configuracion' %}"><i class="fas fa-sliders-h me-2 text-muted"></i>Configuración General</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{% url 'usuarios_agentes' %}"><i class="fas fa-user-shield me-2 text-muted"></i>Gestión de Agentes</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'clientes' %}"><i class="fas fa-users me-2 text-muted"></i>Gestión de Clientes</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'ver_gerencias' %}"><i class="fas fa-building me-2 text-muted"></i>Gestión de Gerencias</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{% url 'panel_permisos_roles' %}"><i class="fas fa-shield-alt me-2 text-muted"></i>Roles y Permisos</a></li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="fas fa-cogs me-1"></i> Admin</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{% url 'configuracion' %}">Configuración</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'usuarios_agentes' %}">Agentes</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'panel_permisos_roles' %}">Gestión de Permisos</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'clientes' %}">Clientes</a></li>
                                 </ul>
                             </li>
                             {% endif %}
-                        
                         {% else %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'clientes:dashboard' %}"><i class="fas fa-home me-1"></i> Mi Panel</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'ver_mis_tikects' %}"><i class="fas fa-folder-open me-1"></i> Mis Tickets</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'crear_tikects_clientes' %}"><i class="fas fa-plus-circle me-1"></i> Nuevo Ticket</a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link" href="{% url 'clientes:dashboard' %}">Mi Panel</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{% url 'ver_mis_tikects' %}">Mis Tickets</a></li>
                         {% endif %}
                     {% endif %}
                 </ul>
 
                 {% if user.is_authenticated %}
                 <ul class="navbar-nav align-items-center">
-                    
-                    {% if user.is_superuser or agente %}
                     <li class="nav-item dropdown me-3">
-                        <a class="nav-link position-relative dropdown-toggle no-toggle-arrow" href="#" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-bell fa-lg text-white"></i>
-                            {% if notificaciones %}
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.65rem;">
-                                    {{ notificaciones|length }}
-                                </span>
-                            {% endif %}
+                        <a class="nav-link position-relative" href="#" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell fa-lg"></i>
+                            {% if notificaciones %}<span class="position-absolute top-0 start-100 badge bg-danger rounded-pill">{{ notificaciones|length }}</span>{% endif %}
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm py-2" style="width: 280px;" aria-labelledby="notifDropdown">
-                            <li class="px-3 py-1 bg-light fw-bold border-bottom text-muted" style="font-size: 0.85rem;">Últimas Notificaciones</li>
+                        <ul class="dropdown-menu dropdown-menu-end p-2" style="width: 260px;">
+                            <li class="small fw-bold px-2 py-1 text-muted border-bottom">Notificaciones</li>
                             {% for n in notificaciones %}
-                                <li>
-                                    <a class="dropdown-item py-2 border-bottom text-wrap" href="{% url 'detalle_tikect' n.tikect.id %}" style="font-size: 0.85rem;">
-                                        <i class="fas fa-info-circle text-primary me-2"></i>{{ n.descripcion }}
-                                    </a>
-                                </li>
+                                <li><a class="dropdown-item small" href="{% url 'detalle_tikect' n.tikect.id %}">{{ n.descripcion }}</a></li>
                             {% empty %}
-                                <li class="text-center py-3 text-muted" style="font-size: 0.85rem;"><i class="fas fa-check-circle text-success me-1"></i>No tienes tareas pendientes</li>
+                                <li class="text-center small text-muted py-2">Sin notificaciones</li>
                             {% endfor %}
                         </ul>
                     </li>
-                    {% endif %}
-
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle btn-perfil-navbar rounded-pill px-3 py-1 shadow-sm d-flex align-items-center" href="#" id="userProfile" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user-circle fa-lg me-2"></i> 
-                            <span class="fw-semibold" style="font-size: 0.9rem;">{{ user.first_name|default:user.username }}</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm mt-2">
-                            <li>
-                                <div class="px-3 py-2 text-muted border-bottom" style="font-size: 0.8rem;">
-                                    Conectado como:<br><strong class="text-dark">{{ user.username }}</strong>
-                                </div>
-                            </li>
-                            <li>
-                                <a class="dropdown-item text-danger py-2" href="{% url 'cerrar_sesion' %}">
-                                    <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
-                                </a>
-                            </li>
+                        <button class="btn btn-outline-light btn-sm rounded-pill px-3" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> {{ user.first_name|default:user.username }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end p-2">
+                            <li><a class="dropdown-item text-danger" href="{% url 'cerrar_sesion' %}"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -148,30 +115,21 @@
     </nav>
 
     <main class="container-fluid px-md-5 py-4 flex-grow-1">
-        
         {% if messages %}
-            <div class="row">
-                <div class="col-12 mb-3">
-                    {% for message in messages %}
-                        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
-                            {% if message.tags == 'success' %}<i class="fas fa-check-circle me-2"></i>{% endif %}
-                            {% if message.tags == 'error' %}<i class="fas fa-exclamation-circle me-2"></i>{% endif %}
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show card-modern shadow-sm">
+                    {{ message }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
-            </div>
+            {% endfor %}
         {% endif %}
-
-        {% block content %}
-        {% endblock %}
-        
+        {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-dark text-white text-center py-2 mt-auto border-top border-secondary">
-        <div class="container text-muted" style="font-size: 0.8rem;">
-            &copy; 2026 EMVEPRO - División de Tecnología e Infraestructura. Versión 2.0
+    <footer class="footer-perla text-center mt-auto">
+        <div class="container">
+            <p class="footer-text mb-0">
+                EMVEPRO - GERENCIA DE TECNOLOGÍA DE LA INFORMACIÓN Y LA COMUNICACIÓN | Versión 3.0 &copy; 2026
+            </p>
         </div>
     </footer>
 

@@ -4,111 +4,94 @@
 {% block title %}Procesar Triaje - Ticket #{{ ticket.id }}{% endblock %}
 
 {% block content %}
-<div class="page-header bg-light p-4 mb-4 border-bottom">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1><i class="fas fa-gavel me-2 text-primary"></i> TRIAJE DE TICKET #{{ ticket.id }}</h1>
-            <a href="{% url 'mesa_triage' %}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Volver a la Mesa</a>
-        </div>
+<div class="container-fluid animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-gavel me-2 text-primary"></i> Triaje de Ticket #{{ ticket.id }}</h2>
+        <a href="{% url 'mesa_triage' %}" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="fas fa-arrow-left me-1"></i> Volver
+        </a>
     </div>
-</div>
 
-<div class="container mb-5">
     <div class="row">
         <div class="col-md-5">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-dark text-white fw-bold">
-                    <i class="fas fa-info-circle me-1"></i> Detalles del Requerimiento
+            <div class="card card-modern p-4 h-100">
+                <h5 class="fw-bold mb-3"><i class="fas fa-info-circle me-2 text-primary"></i> Detalles del Requerimiento</h5>
+                <h4 class="text-primary fw-bold mb-3">{{ ticket.titulo }}</h4>
+                <div class="p-3 bg-light rounded-3 border">
+                    <p class="mb-2 small"><strong>Remitente:</strong> {{ ticket.usuario.username }}</p>
+                    <p class="mb-2 small"><strong>Fecha:</strong> {{ ticket.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                    <p class="mb-2 small"><strong>Cola:</strong> <span class="badge bg-secondary">{{ ticket.cola.nombre }}</span></p>
+                    <p class="mb-0 small"><strong>Servicio:</strong> <span class="badge bg-info text-dark">{{ ticket.servicio.nombre }}</span></p>
                 </div>
-                <div class="card-body">
-                    <h5 class="text-primary fw-bold">{{ ticket.titulo }}</h5>
-                    <hr>
-                    <p class="mb-2"><strong>Remitente:</strong> {{ ticket.usuario.username }} ({% if ticket.gerencia %}{{ ticket.gerencia }}{% else %}Sin Gerencia{% endif %})</p>
-                    <p class="mb-2"><strong>Fecha de Creación:</strong> {{ ticket.fecha_creacion|date:"Y-m-d H:i" }}</p>
-                    <p class="mb-2"><strong>Cola de Entrada:</strong> <span class="badge bg-secondary">{{ ticket.cola.nombre }}</span></p>
-                    <p class="mb-2"><strong>Servicio Solicitado:</strong> <span class="badge bg-info text-dark">{{ ticket.servicio.nombre }}</span></p>
-                    <hr>
-                    <label class="fw-bold">Descripción original del usuario:</label>
-                    <div class="p-3 bg-light rounded border text-muted" style="white-space: pre-wrap;">{{ ticket.descripcion|default:"Sin descripción detallada." }}</div>
+                <label class="fw-bold mt-4 mb-2 small text-uppercase text-muted">Descripción del usuario:</label>
+                <div class="p-3 bg-white border rounded-3 text-muted small" style="white-space: pre-wrap; min-height: 150px;">
+                    {{ ticket.descripcion|default:"Sin descripción detallada." }}
                 </div>
             </div>
         </div>
 
         <div class="col-md-7">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white fw-bold">
-                    <i class="fas fa-edit me-1"></i> Clasificación, Prioridad y Asignación
-                </div>
-                <div class="card-body">
-                    <form method="POST">
-                        {% csrf_token %}
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="tipo" class="form-label fw-bold">Tipo de Requerimiento:</label>
-                                <select class="form-select" id="tipo" name="tipo" required>
-                                    <option value="" disabled selected>-- Seleccione Tipo --</option>
-                                    {% for servicio in servicios %}
-                                        <option value="{{ servicio.nombre }}" {% if ticket.tipo == servicio.nombre or ticket.servicio.nombre == servicio.nombre %}selected{% endif %}>
-                                            {{ servicio.nombre }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="prioridad" class="form-label fw-bold">Nivel de Prioridad:</label>
-                                <select class="form-select" id="prioridad" name="prioridad" required>
-                                    <option value="" disabled selected>-- Seleccione Prioridad --</option>
-                                    {% for valor, etiqueta in prioridades %}
-                                        <option value="{{ valor }}" {% if ticket.prioridad == valor %}selected{% endif %}>{{ etiqueta }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="estado_triage" class="form-label fw-bold">Estado del Triaje:</label>
-                                <select class="form-select" id="estado_triage" name="estado_triage" required>
-                                    {% for valor, etiqueta in estados_triage %}
-                                        <option value="{{ valor }}" {% if ticket.estado_triage == valor or not ticket.estado_triage and valor == 'asignado' %}selected{% endif %}>{{ etiqueta }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="tiempo_estimado" class="form-label fw-bold">Resolución Estimada (Horas):</label>
-                                <input type="number" class="form-control" id="tiempo_estimado" name="tiempo_estimado" min="1" placeholder="Ej: 4" value="{{ ticket.tiempo_resolucion_estimado|default:'' }}">
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="agente_asignado" class="form-label fw-bold">Asignar a Resolutor / Agente Técnico:</label>
-                            <select class="form-select" id="agente_asignado" name="agente_asignado">
-                                <option value="">-- Dejar en Cola General (Sin Agente) --</option>
-                                {% for agente in agentes %}
-                                    <option value="{{ agente.id }}" {% if ticket.usuario == agente.usuario %}selected{% endif %}>{{ agente.nombre_usuario }} ({{ agente.usuario.get_full_name }})</option>
+            <div class="card card-modern p-4">
+                <h5 class="fw-bold mb-4"><i class="fas fa-edit me-2 text-primary"></i> Clasificación y Asignación</h5>
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Tipo de Requerimiento</label>
+                            <select class="form-select rounded-pill" name="tipo" required>
+                                {% for servicio in servicios %}
+                                    <option value="{{ servicio.nombre }}" {% if ticket.tipo == servicio.nombre or ticket.servicio.nombre == servicio.nombre %}selected{% endif %}>{{ servicio.nombre }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-
-                        <div class="mb-3">
-                            <label for="tags" class="form-label fw-bold">Etiquetas de Clasificación (Tags separadas por coma):</label>
-                            <input type="text" class="form-control" id="tags" name="tags" placeholder="redes, hardware, impresora, correo" value="{{ ticket.tags|default:'' }}">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Nivel de Prioridad</label>
+                            <select class="form-select rounded-pill" name="prioridad" required>
+                                {% for valor, etiqueta in prioridades %}
+                                    <option value="{{ valor }}" {% if ticket.prioridad == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
+                    </div>
 
-                        <div class="mb-4">
-                            <label for="notas_triage" class="form-label fw-bold">Notas de Análisis / Diagnóstico Inicial:</label>
-                            <textarea class="form-control" id="notas_triage" name="notas_triage" rows="3" placeholder="Escriba observaciones técnicas internas sobre el estado del caso antes de delegarlo...">{{ ticket.notas_triage|default:'' }}</textarea>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Estado del Triaje</label>
+                            <select class="form-select rounded-pill" name="estado_triage" required>
+                                {% for valor, etiqueta in estados_triage %}
+                                    <option value="{{ valor }}" {% if ticket.estado_triage == valor or not ticket.estado_triage and valor == 'asignado' %}selected{% endif %}>{{ etiqueta }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Resolución Estimada (Horas)</label>
+                            <input type="number" class="form-control rounded-pill" name="tiempo_estimado" value="{{ ticket.tiempo_resolucion_estimado|default:'' }}">
+                        </div>
+                    </div>
 
-                        <div class="d-flex justify-content-end gap-2">
-                            <a href="{% url 'mesa_triage' %}" class="btn btn-secondary">Cancelar</a>
-                            <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i> Aplicar Triaje y Guardar</button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Asignar a Agente Técnico</label>
+                        <select class="form-select rounded-pill" name="agente_asignado">
+                            <option value="">-- Sin Asignar (Cola General) --</option>
+                            {% for agente in agentes %}
+                                <option value="{{ agente.id }}" {% if ticket.usuario == agente.usuario %}selected{% endif %}>{{ agente.nombre_usuario }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Notas de Análisis Técnico</label>
+                        <textarea class="form-control rounded-3" name="notas_triage" rows="3">{{ ticket.notas_triage|default:'' }}</textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'mesa_triage' %}" class="btn btn-secondary rounded-pill px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                            <i class="fas fa-save me-1"></i> Aplicar Triaje
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

@@ -1,55 +1,67 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Asignar Agente a Grupo | Tickpro 3.0{% endblock %}
 
 {% block content %}
-    <div class="container mt-4">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card shadow border-0">
-                    <div class="card-header bg-success text-white text-center py-3">
-                        <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i> Asignar Agente a Grupo</h4>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+</style>
+
+<div class="container-fluid animate__animated animate__fadeIn">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="glass-card p-4">
+                <h4 class="fw-bold mb-4 text-center text-dark">
+                    <i class="fas fa-user-plus me-2 text-success"></i> Asignar Agente a Grupo
+                </h4>
+                
+                {% if error %}
+                    <div class="alert alert-danger border-0 rounded-3 shadow-sm mb-4">{{ error }}</div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Seleccionar Agente</label>
+                        <select class="form-select rounded-pill" name="agente" required>
+                            <option value="" disabled selected>-- Elija un agente --</option>
+                            {% for agente in agentes %}
+                                <option value="{{ agente.id }}">
+                                    {{ agente.nombre_usuario }} - {{ agente.usuario.first_name }} {{ agente.usuario.last_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    <div class="card-body p-4">
-                        {% if error %}
-                            <div class="alert alert-danger shadow-sm">{{ error }}</div>
-                        {% endif %}
 
-                        <form method="post">
-                            {% csrf_token %}
-                            
-                            <div class="mb-3">
-                                <label for="agente" class="form-label fw-bold">Seleccionar Agente</label>
-                                <select class="form-select" id="agente" name="agente" required>
-                                    <option value="" disabled selected>-- Elija un agente --</option>
-                                    {% for agente in agentes %}
-                                        <option value="{{ agente.id }}">
-                                            {{ agente.nombre_usuario }} - {{ agente.usuario.first_name }} {{ agente.usuario.last_name }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <div class="mb-4">
-                                <label for="grupo" class="form-label fw-bold">Seleccionar Grupo</label>
-                                <select class="form-select" id="grupo" name="grupo" required>
-                                    <option value="" disabled selected>-- Elija un grupo --</option>
-                                    {% for grupo in grupos %}
-                                        <option value="{{ grupo.id }}">{{ grupo.nombre }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-success btn-lg">
-                                    <i class="fas fa-save me-2"></i> Confirmar Asignación
-                                </button>
-                                <a href="{% url 'usuarios_por_grupos_agentes' %}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-arrow-left me-2"></i> Cancelar
-                                </a>
-                            </div>
-                        </form>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Seleccionar Grupo</label>
+                        <select class="form-select rounded-pill" name="grupo" required>
+                            <option value="" disabled selected>-- Elija un grupo --</option>
+                            {% for grupo in grupos %}
+                                <option value="{{ grupo.id }}">{{ grupo.nombre }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-                </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg rounded-pill shadow-sm">
+                            <i class="fas fa-save me-2"></i> Confirmar Asignación
+                        </button>
+                        <a href="{% url 'usuarios_por_grupos_agentes' %}" class="btn btn-outline-secondary rounded-pill">
+                            <i class="fas fa-arrow-left me-2"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
 {% endblock %}

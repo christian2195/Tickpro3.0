@@ -1,79 +1,65 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Detalle del Ticket #{{ tikect.id }} - TickPro{% endblock %}
+{% block title %}Ticket #{{ tikect.id }} | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1><i class="fas fa-ticket-alt me-3"></i> DETALLE DEL TICKET #{{ tikect.id }}</h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'pagina_principal' %}">Inicio</a></li>
-                    <li class="breadcrumb-item"><a href="{% if request.user.agente or request.user.agentes %}{% url 'ver_tikects_asignados_agentes' %}{% else %}{% url 'ver_tikects' %}{% endif %}">Tickets</a></li>
-                    <li class="breadcrumb-item active">Detalle</li>
-                </ol>
-            </nav>
-        </div>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+</style>
+
+<div class="container-fluid animate__animated animate__fadeIn mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-ticket-alt me-2 text-primary"></i> Ticket #{{ tikect.id }}</h2>
+        <span class="badge rounded-pill {% if tikect.estado == 'cerrado' %}bg-danger{% else %}bg-success{% endif %} px-3 py-2">
+            {{ tikect.estado|upper }}
+        </span>
     </div>
-</div>
 
-<div class="container mt-4">
     <div class="row">
-        <div class="col-md-8">
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Información</h5>
-                    <span class="badge {% if tikect.estado == 'cerrado' %}bg-danger{% else %}bg-success{% endif %} fs-6">
-                        {{ tikect.estado|upper }}
-                    </span>
+        <div class="col-lg-8">
+            <div class="glass-card p-4 mb-4">
+                <h3 class="fw-bold mb-3">{{ tikect.titulo }}</h3>
+                <div class="row text-muted small mb-4">
+                    <div class="col-md-6"><i class="fas fa-calendar-day me-1"></i> {{ tikect.fecha_creacion|date:"d/m/Y h:i A" }}</div>
+                    <div class="col-md-6"><i class="fas fa-user me-1"></i> {{ tikect.usuario.username }}</div>
                 </div>
-                <div class="card-body">
-                    <h3 class="mb-3">{{ tikect.titulo }}</h3>
-                    <div class="row mb-3">
-                        <div class="col-md-6"><p><strong>Fecha:</strong> {{ tikect.fecha_creacion|date:"d/m/Y h:i A" }}</p></div>
-                        <div class="col-md-6"><p><strong>Usuario:</strong> {{ tikect.usuario.username }}</p></div>
-                    </div>
-                    <p><strong>Descripción:</strong></p>
-                    <div class="p-3 bg-light rounded border">{{ tikect.descripcion|linebreaks }}</div>
-                    
-                    {% if tikect.estado == 'cerrado' and tikect.descripcion_solucion %}
-                    <div class="mt-4 p-3 bg-success bg-opacity-10 rounded border border-success">
-                        <p class="text-success fw-bold"><i class="fas fa-check-circle me-2"></i> Solución Aplicada:</p>
-                        <p class="mb-0">{{ tikect.descripcion_solucion }}</p>
-                    </div>
-                    {% endif %}
-                </div>
+                <div class="bg-light p-3 rounded-3 border">{{ tikect.descripcion|linebreaks }}</div>
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-info text-white"><h5 class="mb-0"><i class="fas fa-user-circle me-2"></i> Perfil</h5></div>
-                <div class="card-body">
-                    <p class="mb-1"><strong>Nombre:</strong> {{ tikect.cliente.nombre|default:tikect.usuario.get_full_name }}</p>
-                    <p class="mb-1"><strong>Email:</strong> {{ tikect.cliente.correo|default:tikect.usuario.email }}</p>
-                </div>
+        <div class="col-lg-4">
+            <div class="glass-card p-4 mb-4">
+                <h5 class="fw-bold mb-3"><i class="fas fa-user-circle me-2 text-info"></i> Cliente</h5>
+                <p class="mb-1"><strong>{{ tikect.cliente.nombre|default:tikect.usuario.get_full_name }}</strong></p>
+                <small class="text-muted">{{ tikect.cliente.correo|default:tikect.usuario.email }}</small>
             </div>
+
+            {% if request.user.is_staff %}
+            <div class="glass-card p-4 mb-4">
+                <h5 class="fw-bold mb-3 text-primary"><i class="fas fa-envelope me-2"></i> Responder al Usuario</h5>
+                <form action="{% url 'enviar_respuesta_correo' tikect.id %}" method="POST">
+                    {% csrf_token %}
+                    <textarea name="mensaje" class="form-control rounded-3 mb-3" rows="3" placeholder="Escribe tu mensaje..." required></textarea>
+                    <button type="submit" class="btn btn-primary rounded-pill w-100 shadow-sm">
+                        <i class="fas fa-paper-plane me-2"></i> Enviar Correo
+                    </button>
+                </form>
+            </div>
+            {% endif %}
 
             {% if tikect.estado != 'cerrado' and request.user.is_staff %}
-            <div class="card mb-4 shadow-sm border-primary">
-                <div class="card-header bg-primary text-white"><h5 class="mb-0"><i class="fas fa-envelope me-2"></i> Responder al Usuario</h5></div>
-                <div class="card-body">
-                    <form action="{% url 'enviar_respuesta_correo' tikect.id %}" method="POST">
-                        {% csrf_token %}
-                        <textarea name="mensaje" class="form-control mb-2" rows="3" placeholder="Escribe tu respuesta aquí..." required></textarea>
-                        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-paper-plane me-1"></i> Enviar Correo</button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-warning text-dark"><h5 class="mb-0"><i class="fas fa-tools me-2"></i> Acciones</h5></div>
-                <div class="card-body">
-                    <button class="btn btn-danger w-100 mb-2" data-bs-toggle="modal" data-bs-target="#cerrarModal"><i class="fas fa-times-circle me-2"></i> Cerrar Ticket</button>
-                    <a href="{% url 'reasignar_tikect' tikect.id %}" class="btn btn-outline-warning w-100"><i class="fas fa-exchange-alt me-2"></i> Reasignar</a>
+            <div class="glass-card p-4 mb-4">
+                <h5 class="fw-bold mb-3 text-warning"><i class="fas fa-tools me-2"></i> Acciones</h5>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#cerrarModal">Cerrar Ticket</button>
+                    <a href="{% url 'reasignar_tikect' tikect.id %}" class="btn btn-outline-warning rounded-pill">Reasignar</a>
                 </div>
             </div>
             {% endif %}
@@ -82,16 +68,21 @@
 </div>
 
 <div class="modal fade" id="cerrarModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white"><h5 class="modal-title">Cerrar Ticket #{{ tikect.id }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title">Cerrar Ticket #{{ tikect.id }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
             <form method="post" action="{% url 'cerrar_tikect' tikect.id %}">
                 {% csrf_token %}
-                <div class="modal-body">
-                    <label class="form-label">Descripción de la Solución *</label>
-                    <textarea name="descripcion_solucion" class="form-control" rows="3" required></textarea>
+                <div class="modal-body p-4">
+                    <label class="form-label small fw-bold">Nota de Cierre *</label>
+                    <textarea name="descripcion_solucion" class="form-control rounded-3" rows="3" placeholder="Describe la solución aplicada..." required></textarea>
                 </div>
-                <div class="modal-footer"><button type="submit" class="btn btn-danger">Confirmar Cierre</button></div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">Confirmar Cierre</button>
+                </div>
             </form>
         </div>
     </div>

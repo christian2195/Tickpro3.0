@@ -1,70 +1,68 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Carga Masiva y Exportación - EMVEPRO{% endblock %}
+{% block title %}Carga Masiva de Usuarios | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="page-header d-flex justify-content-between align-items-center">
-        <h1><i class="fas fa-users-cog me-2"></i>Gestión Masiva de Usuarios</h1>
-        <a href="{% url 'exportar_excel' %}" class="btn btn-success shadow-sm">
-            <i class="fas fa-file-excel mountaineer me-2"></i> Exportar Clientes Actuales
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+</style>
+
+<div class="container-fluid animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-users-cog me-2 text-primary"></i> Gestión Masiva de Usuarios</h2>
+        <a href="{% url 'exportar_excel' %}" class="btn btn-outline-success rounded-pill px-4">
+            <i class="fas fa-file-excel me-2"></i> Exportar Base Actual
         </a>
     </div>
 
-    <div class="row mt-4">
+    <div class="row">
         <div class="col-md-7">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0"><i class="fas fa-file-upload text-primary me-2"></i>Importar desde Excel</h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted">
-                        Selecciona el archivo <code>.xlsx</code> para cargar el listado de personal de la institución directamente en la plataforma.
-                    </p>
+            <div class="glass-card p-4">
+                <h5 class="fw-bold mb-4"><i class="fas fa-file-upload me-2 text-primary"></i> Importar desde Excel</h5>
+                
+                <form method="POST" enctype="multipart/form-data" action="{% url 'registrar_usuarios' %}">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Seleccionar archivo (.xlsx)</label>
+                        <input class="form-control rounded-pill" type="file" name="archivo_excel" accept=".xlsx, .xls" required>
+                    </div>
                     
-                    <form method="POST" enctype="multipart/form-data" action="{% url 'registrar_usuarios' %}">
-                        {% csrf_token %}
-                        <div class="mb-4">
-                            <label for="archivo_excel" class="form-label fw-bold">Archivo de Usuarios nuevos:</label>
-                            <input class="form-control" type="file" id="archivo_excel" name="archivo_excel" accept=".xlsx, .xls" required>
-                        </div>
-                        
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-cloud-upload-alt me-2"></i> Procesar y Registrar
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm">
+                        <i class="fas fa-cloud-upload-alt me-2"></i> Procesar y Registrar
+                    </button>
+                </form>
             </div>
         </div>
 
-        # TABLA INFORMATIVA DE REQUISITOS
         <div class="col-md-5">
-            <div class="card shadow-sm bg-light border-0">
-                <div class="card-body">
-                    <h5 class="card-title text-dark fw-bold"><i class="fas fa-info-circle text-info me-2"></i>Formato del Archivo</h5>
-                    <p class="card-text small text-muted">
-                        Para que la carga se ejecute sin errores, el archivo Excel debe estructurarse estrictamente con las siguientes columnas iniciales:
-                    </p>
-                    <table class="table table-sm table-bordered bg-white small">
-                        <thead>
-                            <tr class="table-secondary">
-                                <th>Columna</th>
-                                <th>Descripción</th>
-                            </tr>
+            <div class="glass-card p-4">
+                <h5 class="fw-bold mb-3 text-secondary"><i class="fas fa-info-circle me-2"></i> Formato Requerido</h5>
+                <p class="text-muted small">El archivo debe contener estas columnas:</p>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm table-borderless small">
+                        <thead class="text-uppercase text-muted border-bottom">
+                            <tr><th>Columna</th><th>Descripción</th></tr>
                         </thead>
                         <tbody>
-                            <tr><td><strong>Nombre</strong></td><td>Primer nombre del empleado</td></tr>
-                            <tr><td><strong>Apellido</strong></td><td>Primer apellido del empleado</td></tr>
-                            <tr><td><strong>usuario</strong></td><td>ID de inicio de sesión (único)</td></tr>
-                            <tr><td><strong>Clave</strong></td><td>Contraseña temporal de acceso</td></tr>
-                            <tr><td><strong>Direccion</strong></td><td>Gerencia asignada (ej: Tecnología)</td></tr>
+                            <tr><td><strong>Nombre</strong></td><td>Nombre del empleado</td></tr>
+                            <tr><td><strong>Apellido</strong></td><td>Apellido del empleado</td></tr>
+                            <tr><td><strong>Usuario</strong></td><td>ID único de acceso</td></tr>
+                            <tr><td><strong>Clave</strong></td><td>Contraseña temporal</td></tr>
+                            <tr><td><strong>Direccion</strong></td><td>Gerencia asignada</td></tr>
                         </tbody>
                     </table>
-                    <div class="alert alert-warning small mb-0 mt-2">
-                        <i class="fas fa-exclamation-triangle me-1"></i> El correo institucional <strong>@emvepro.gob.ve</strong> se calculará automáticamente en base al Nombre y Apellido.
-                    </div>
+                </div>
+
+                <div class="alert alert-warning border-0 rounded-3 mt-3 small">
+                    <i class="fas fa-exclamation-triangle me-2"></i> El correo <strong>@emvepro.gob.ve</strong> se generará automáticamente.
                 </div>
             </div>
         </div>

@@ -1,222 +1,80 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Mis Tickets {% endblock %}
+{% block title %}Mis Tickets | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<!-- Encabezado de página -->
-<div class="page-header">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1>
-                <i class="fas fa-ticket-alt me-3"></i> MIS TICKETS
-            </h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'pagina_principal_clientes' %}">Inicio</a></li>
-                    <li class="breadcrumb-item active">Mis Tickets</li>
-                </ol>
-            </nav>
-        </div>
-    </div>
-</div>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+    .table-modern { border-collapse: separate; border-spacing: 0 10px; }
+    .table-modern tbody tr { background: white; border-radius: 12px; }
+    .table-modern tbody td { padding: 15px; border: none; }
+</style>
 
-<div class="container">
-    <!-- Botones de filtro -->
+<div class="container-fluid animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-ticket-alt me-2 text-primary"></i> Mis Tickets</h2>
+        <a href="{% url 'crear_tikects' %}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="fas fa-plus-circle me-2"></i> Nuevo Ticket
+        </a>
+    </div>
+
     <div class="row mb-4">
         <div class="col-12">
             <div class="btn-group w-100" role="group">
-                <a href="{% url 'ver_mis_tikects' %}" class="btn {% if request.resolver_match.url_name == 'ver_mis_tikects' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                    <i class="fas fa-list me-2"></i> Todos
-                </a>
-                <a href="{% url 'ver_mis_tikects_abiertos' %}" class="btn {% if request.resolver_match.url_name == 'ver_mis_tikects_abiertos' %}btn-success{% else %}btn-outline-success{% endif %}">
-                    <i class="fas fa-folder-open me-2"></i> Abiertos
-                </a>
-                <a href="{% url 'ver_mis_tikects_cerrados' %}" class="btn {% if request.resolver_match.url_name == 'ver_mis_tikects_cerrados' %}btn-danger{% else %}btn-outline-danger{% endif %}">
-                    <i class="fas fa-check-circle me-2"></i> Cerrados
-                </a>
+                <a href="{% url 'ver_mis_tikects' %}" class="btn {% if request.resolver_match.url_name == 'ver_mis_tikects' %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill">Todos</a>
+                <a href="{% url 'ver_mis_tikects_abiertos' %}" class="btn {% if request.resolver_match.url_name == 'ver_mis_tikects_abiertos' %}btn-success{% else %}btn-outline-success{% endif %} rounded-pill">Abiertos</a>
+                <a href="{% url 'ver_mis_tikects_cerrados' %}" class="btn {% if request.resolver_match.url_name == 'ver_mis_tikects_cerrados' %}btn-danger{% else %}btn-outline-danger{% endif %} rounded-pill">Cerrados</a>
             </div>
         </div>
     </div>
 
-    <!-- Estadísticas rápidas -->
     <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h6 class="card-title">Mis Tickets</h6>
-                    <h3 class="mb-0">{{ page_obj.paginator.count }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h6 class="card-title">Abiertos</h6>
-                    <h3 class="mb-0">{{ abiertos_count|default:"0" }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-danger">
-                <div class="card-body">
-                    <h6 class="card-title">Cerrados</h6>
-                    <h3 class="mb-0">{{ cerrados_count|default:"0" }}</h3>
-                </div>
-            </div>
-        </div>
+        <div class="col-md-4"><div class="glass-card p-3 text-center"><small class="text-muted d-block">TOTAL</small><h4 class="fw-bold mb-0">{{ page_obj.paginator.count }}</h4></div></div>
+        <div class="col-md-4"><div class="glass-card p-3 text-center"><small class="text-muted d-block">ABIERTOS</small><h4 class="fw-bold mb-0 text-success">{{ abiertos_count|default:"0" }}</h4></div></div>
+        <div class="col-md-4"><div class="glass-card p-3 text-center"><small class="text-muted d-block">CERRADOS</small><h4 class="fw-bold mb-0 text-danger">{{ cerrados_count|default:"0" }}</h4></div></div>
     </div>
 
-    <!-- Tabla de tickets -->
-    <div class="card">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-list me-2"></i> Listado de Tickets</h5>
-            <div>
-                <a href="{% url 'crear_tikects' %}" class="btn btn-sm btn-light">
-                    <i class="fas fa-plus-circle me-2"></i> Nuevo Ticket
-                </a>
-            </div>
+    <div class="glass-card p-4">
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table table-modern align-middle">
+                <thead class="text-muted small text-uppercase">
+                    <tr><th>ID</th><th>Fecha</th><th>Título</th><th>Servicio</th><th>Estado</th><th>Acciones</th></tr>
+                </thead>
+                <tbody>
+                    {% for tikect in page_obj %}
+                    <tr>
+                        <td class="fw-bold text-primary">#{{ tikect.id }}</td>
+                        <td class="small text-muted">{{ tikect.fecha_creacion|date:"d/m/y H:i" }}</td>
+                        <td class="fw-bold">{{ tikect.titulo|truncatechars:30 }}</td>
+                        <td>{{ tikect.servicio.nombre }}</td>
+                        <td>
+                            <span class="badge rounded-pill {% if tikect.estado == 'cerrado' %}bg-danger{% else %}bg-success{% endif %} px-3">
+                                {{ tikect.estado|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'detalle_tikect' tikect.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">Ver</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        <div class="card-body">
-            {% if page_obj %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Fecha</th>
-                                <th>Título</th>
-                                <th>Descripción</th>
-                                <th>Gerencia</th>
-                                <th>Servicio</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for tikect in page_obj %}
-                            <tr>
-                                <td><strong>#{{ tikect.id }}</strong></td>
-                                <td>
-                                    <small>{{ tikect.fecha_creacion|date:"d/m/Y" }}</small>
-                                    <br>
-                                    <small class="text-muted">{{ tikect.fecha_creacion|date:"h:i A" }}</small>
-                                </td>
-                                <td>{{ tikect.titulo|truncatechars:30 }}</td>
-                                <td>{{ tikect.descripcion|truncatechars:50 }}</td>
-                                <td>{{ tikect.gerencia|truncatechars:20 }}</td>
-                                <td>{{ tikect.servicio.nombre }}</td>
-                                <td>
-                                    {% if tikect.estado == 'cerrado' %}
-                                        <span class="badge bg-danger">Cerrado</span>
-                                    {% else %}
-                                        <span class="badge bg-success">Abierto</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="{% url 'detalle_tikect' tikect.id %}" class="btn btn-sm btn-primary" 
-                                       data-bs-toggle="tooltip" title="Ver detalles">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                {% if page_obj.paginator.num_pages > 1 %}
-                <nav class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        {% if page_obj.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                                    <i class="fas fa-chevron-left"></i>
-                                </a>
-                            </li>
-                        {% endif %}
-
-                        {% for i in page_obj.paginator.page_range %}
-                            {% if page_obj.number == i %}
-                                <li class="page-item active">
-                                    <span class="page-link">{{ i }}</span>
-                                </li>
-                            {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ i }}">{{ i }}</a>
-                                </li>
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if page_obj.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-                {% endif %}
-
-            {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-ticket-alt fa-4x text-muted mb-3"></i>
-                    <h5 class="text-muted">No has creado ningún ticket aún</h5>
-                    <p class="text-muted mb-3">Crea tu primer ticket para solicitar soporte o realizar una consulta.</p>
-                    <a href="{% url 'crear_tikects' %}" class="btn btn-primary">
-                        <i class="fas fa-plus-circle me-2"></i> Crear mi primer ticket
-                    </a>
-                </div>
-            {% endif %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
+            <h5>Sin tickets creados</h5>
+            <a href="{% url 'crear_tikects' %}" class="btn btn-primary rounded-pill mt-3">Crear mi primer ticket</a>
         </div>
-    </div>
-
-    <!-- Información de contacto -->
-    <div class="card mt-4">
-        <div class="card-header bg-info text-white">
-            <h5 class="mb-0"><i class="fas fa-headset me-2"></i> ¿Necesitas ayuda con tu ticket?</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <p class="mb-2">
-                        <i class="fas fa-envelope me-2 text-info"></i>
-                        <strong>Email:</strong> soporte@tickpro.com
-                    </p>
-                    <p class="mb-2">
-                        <i class="fas fa-phone-alt me-2 text-info"></i>
-                        <strong>Teléfono:</strong> (0212) 123-4567
-                    </p>
-                </div>
-                <div class="col-md-6">
-                    <p class="mb-2">
-                        <i class="fas fa-clock me-2 text-info"></i>
-                        <strong>Horario:</strong> Lun-Vie 8:00 AM - 5:00 PM
-                    </p>
-                    <p class="mb-2">
-                        <i class="fas fa-clock me-2 text-info"></i>
-                        <strong>Tiempo de respuesta:</strong> 24-48 horas hábiles
-                    </p>
-                </div>
-            </div>
-        </div>
+        {% endif %}
     </div>
 </div>
-
-<script>
-    // Inicializar tooltips
-    document.addEventListener('DOMContentLoaded', function() {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function(tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-
-    // Auto-refresh cada 30 segundos (opcional)
-    // setTimeout(function(){
-    //     location.reload();
-    // }, 30000);
-</script>
 {% endblock %}

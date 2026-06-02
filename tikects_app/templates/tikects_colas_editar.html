@@ -1,86 +1,69 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Editar Cola {% endblock %}
+{% block title %}Editar Cola | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<!-- Encabezado de página -->
-<div class="page-header">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1>
-                <i class="fas fa-edit me-3"></i> EDITAR COLA
-            </h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'configuracion' %}">Configuración</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'tikects_colas' %}">Colas</a></li>
-                    <li class="breadcrumb-item active">Editar Cola</li>
-                </ol>
-            </nav>
-        </div>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+</style>
+
+<div class="container-fluid animate__animated animate__fadeIn">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-edit me-2 text-primary"></i> Editar Cola</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'configuracion' %}" class="text-decoration-none">Configuración</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'tikects_colas' %}" class="text-decoration-none">Colas</a></li>
+                <li class="breadcrumb-item active text-primary fw-bold">Editar</li>
+            </ol>
+        </nav>
     </div>
-</div>
 
-<div class="container">
     <div class="row">
-        <div class="col-md-8 mx-auto">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-stream me-2"></i> Datos de la Cola</h5>
-                </div>
-                <div class="card-body">
-                    <form method="post" class="needs-validation" novalidate>
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label for="nombre" class="form-label">Nombre de la Cola <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="nombre" name="nombre" 
-                                   value="{{ cola.nombre }}" required>
-                            <div class="invalid-feedback">El nombre de la cola es obligatorio.</div>
-                        </div>
+        <div class="col-md-7 mx-auto">
+            <div class="glass-card p-4">
+                <h5 class="fw-bold mb-4"><i class="fas fa-stream me-2 text-primary"></i> Modificar datos de la cola</h5>
+                
+                <form method="POST" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre de la Cola <span class="text-danger">*</span></label>
+                        <input type="text" name="nombre" class="form-control rounded-pill" value="{{ cola.nombre }}" required>
+                    </div>
 
-                        <div class="mb-4">
-                            <label for="descripcion" class="form-label">Descripción <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="descripcion" name="descripcion" 
-                                      rows="4" required>{{ cola.descripcion }}</textarea>
-                            <div class="invalid-feedback">La descripción es obligatoria.</div>
-                        </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Descripción <span class="text-danger">*</span></label>
+                        <textarea name="descripcion" class="form-control rounded-3" rows="4" required>{{ cola.descripcion }}</textarea>
+                    </div>
 
-                        <!-- Metadatos -->
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <p class="text-muted small mb-1">
-                                    <i class="fas fa-calendar-alt me-1"></i> Fecha de creación: 
-                                    {{ cola.fecha_creacion|default:"No disponible" }}
-                                </p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="text-muted small mb-1">
-                                    <i class="fas fa-ticket-alt me-1"></i> Tickets asociados: 
-                                    {{ cola.tickets_set.count }}
-                                </p>
-                            </div>
-                        </div>
+                    <!-- Metadatos visuales -->
+                    <div class="row mb-4 small text-muted">
+                        <div class="col-6"><i class="fas fa-calendar-alt me-1"></i> Creado: {{ cola.fecha_creacion|default:"N/A" }}</div>
+                        <div class="col-6 text-end"><i class="fas fa-ticket-alt me-1"></i> Tickets activos: {{ cola.tickets_set.count }}</div>
+                    </div>
 
-                        <!-- Botones de acción -->
-                        <div class="d-flex justify-content-end gap-2">
-                            <a href="{% url 'tikects_colas' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-2"></i> Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i> Guardar Cambios
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'tikects_colas' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                            <i class="fas fa-save me-2"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Validación de formulario Bootstrap
     (function() {
         'use strict';
         var forms = document.querySelectorAll('.needs-validation');

@@ -1,107 +1,93 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Configuración de Agente Genérico {% endblock %}
+{% block title %}Agente Genérico | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<!-- Encabezado de página -->
-<div class="page-header">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1>
-                <i class="fas fa-user-cog me-3"></i> AGENTE GENÉRICO
-            </h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'configuracion' %}">Configuración</a></li>
-                    <li class="breadcrumb-item active">Agente Genérico</li>
-                </ol>
-            </nav>
-        </div>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+</style>
+
+<div class="container-fluid animate__animated animate__fadeIn">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-user-cog me-2 text-primary"></i> Asignación Genérica</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'configuracion' %}" class="text-decoration-none">Configuración</a></li>
+                <li class="breadcrumb-item active text-primary fw-bold">Nueva Asignación</li>
+            </ol>
+        </nav>
     </div>
-</div>
 
-<div class="container">
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="fas fa-cog me-2"></i> Configuración de Agente Genérico</h5>
-        </div>
-        <div class="card-body">
-            <form method="post" class="needs-validation" novalidate>
-                {% csrf_token %}
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="glass-card p-4">
+                <h5 class="fw-bold mb-4"><i class="fas fa-cogs me-2 text-primary"></i> Parámetros de automatización</h5>
                 
-                <div class="row">
-                    <!-- Selección de Servicio -->
-                    <div class="col-md-6 mb-3">
-                        <label for="servicio" class="form-label">Servicio <span class="text-danger">*</span></label>
-                        <select class="form-select" id="servicio" name="servicio" required>
-                            <option value="" disabled selected>-- Seleccione un servicio --</option>
-                            {% for servicio in servicios %}
-                                <option value="{{ servicio.id }}">{{ servicio.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="invalid-feedback">Por favor seleccione un servicio.</div>
+                <form method="POST" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Servicio -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Servicio <span class="text-danger">*</span></label>
+                            <select name="servicio" class="form-select rounded-pill" required>
+                                <option value="" disabled selected>-- Seleccione un servicio --</option>
+                                {% for s in servicios %}<option value="{{ s.id }}">{{ s.nombre }}</option>{% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Agente Actual -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Agente Actual <span class="text-danger">*</span></label>
+                            <select name="agente_actual" class="form-select rounded-pill" required>
+                                <option value="" disabled selected>-- Seleccione un agente --</option>
+                                {% for a in agentes %}<option value="{{ a.id }}">{{ a.usuario.username }}</option>{% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Agente Reasignación -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Agente de Reasignación</label>
+                            <select name="agente_reasignacion" class="form-select rounded-pill">
+                                <option value="" selected>-- Ninguno --</option>
+                                {% for a in agentes %}<option value="{{ a.id }}">{{ a.usuario.username }}</option>{% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Tiempo -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Tiempo de Reasignación</label>
+                            <select name="tiempo_reasignacion" class="form-select rounded-pill">
+                                <option value="" selected>-- Sin reasignación --</option>
+                                <option value="10">10 min</option>
+                                <option value="30">30 min</option>
+                                <option value="60">1 hora</option>
+                                <option value="120">2 horas</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- Selección de Agente Actual -->
-                    <div class="col-md-6 mb-3">
-                        <label for="agente_actual" class="form-label">Agente Actual <span class="text-danger">*</span></label>
-                        <select class="form-select" id="agente_actual" name="agente_actual" required>
-                            <option value="" disabled selected>-- Seleccione un agente --</option>
-                            {% for agente in agentes %}
-                                <option value="{{ agente.id }}">{{ agente.usuario.username }} ({{ agente.nombre }} {{ agente.apellido }})</option>
-                            {% endfor %}
-                        </select>
-                        <div class="invalid-feedback">Por favor seleccione un agente.</div>
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'ver_agentes_genericos' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                            <i class="fas fa-save me-2"></i> Guardar Configuración
+                        </button>
                     </div>
-
-                    <!-- Selección de Agente de Reasignación -->
-                    <div class="col-md-6 mb-3">
-                        <label for="agente_reasignacion" class="form-label">Agente de Reasignación</label>
-                        <select class="form-select" id="agente_reasignacion" name="agente_reasignacion">
-                            <option value="" selected>-- Ninguno (opcional) --</option>
-                            {% for agente in agentes %}
-                                <option value="{{ agente.id }}">{{ agente.usuario.username }} ({{ agente.nombre }} {{ agente.apellido }})</option>
-                            {% endfor %}
-                        </select>
-                        <small class="text-muted">Opcional: agente que tomará el servicio después del tiempo de reasignación</small>
-                    </div>
-
-                    <!-- Tiempo de Reasignación -->
-                    <div class="col-md-6 mb-3">
-                        <label for="tiempo_reasignacion" class="form-label">Tiempo de Reasignación</label>
-                        <select class="form-select" id="tiempo_reasignacion" name="tiempo_reasignacion">
-                            <option value="" selected>-- Sin reasignación automática --</option>
-                            <option value="10">10 minutos</option>
-                            <option value="20">20 minutos</option>
-                            <option value="30">30 minutos</option>
-                            <option value="40">40 minutos</option>
-                            <option value="50">50 minutos</option>
-                            <option value="60">60 minutos</option>
-                            <option value="120">2 horas</option>
-                            <option value="180">3 horas</option>
-                            <option value="240">4 horas</option>
-                        </select>
-                        <small class="text-muted">Tiempo después del cual se reasignará automáticamente</small>
-                    </div>
-                </div>
-
-                <!-- Botones de acción -->
-                <div class="text-end mt-4">
-                    <a href="{% url 'ver_agentes_genericos' %}" class="btn btn-secondary me-2">
-                        <i class="fas fa-times me-2"></i> Cancelar
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i> Guardar Configuración
-                    </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Validación de formulario Bootstrap
     (function() {
         'use strict';
         var forms = document.querySelectorAll('.needs-validation');

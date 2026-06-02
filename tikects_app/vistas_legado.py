@@ -11,6 +11,7 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from django.contrib import messages
 from django.core.mail import send_mail
+from django.template.loader import render_to_string
 from django.conf import settings
 import openpyxl
 from reportlab.lib.pagesizes import letter
@@ -1628,71 +1629,58 @@ def actualizar_rol_usuario(request, usuario_id):
 # ============================================
 # DISPARADOR DE CORREOS (GLOBAL)
 # ============================================
-def enviar_correo_estado(ticket):
-    # Validación extra: si el ticket no tiene usuario o el usuario no tiene email, salimos inmediatamente
-    if not ticket.usuario or not ticket.usuario.email:
-        print(f"Ticket #{ticket.id}: No tiene usuario o correo asociado. Omitiendo envío.")
-        return
-
-    # 1. Configuración de credenciales (esto está perfecto)
-    smtp_server = settings.EMAIL_HOST
-    smtp_port = settings.EMAIL_PORT
-    sender = settings.EMAIL_HOST_USER
-    password = settings.EMAIL_HOST_PASSWORD
-    recipient = ticket.usuario.email
-
-    # 2. Crear el mensaje
-    msg = EmailMessage()
-    msg['Subject'] = f"EMVEPRO Tickpro - Ticket #{ticket.id}"
-    msg['From'] = sender
-    msg['To'] = recipient
-    msg.set_content(f"Hola {ticket.usuario.first_name}, el estatus de su ticket ha cambiado a: {ticket.estado.upper()}.")
-
-    # 3. Crear un contexto SSL forzando TLS 1.2
-    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2) 
+def get_ssl_context():
+    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
+    return context
+
+# Esta es la lógica que ahora usará el correo automático Y el manual
+def enviar_correo_profesional(ticket, asunto, mensaje_cuerpo, plantilla='email_ticket.html'):
+    if not ticket.usuario or not ticket.usuario.email:
+        return
+
+    # Renderizamos tu plantilla HTML
+    context_html = {
+        'saludo': f"Hola {ticket.usuario.first_name},",
+        'mensaje_cuerpo': mensaje_cuerpo,
+        'ticket': ticket
+    }
     
+    html_content = render_to_string('emails/' + plantilla, context_html)
+
+    msg = EmailMessage()
+    msg['Subject'] = asunto
+    msg['From'] = settings.EMAIL_HOST_USER
+    msg['To'] = ticket.usuario.email
+    msg.add_alternative(html_content, subtype="html")
+
     try:
-        # Usamos SMTP (sin SSL directo) y luego subimos a STARTTLS
-        with smtplib.SMTP(settings.EMAIL_HOST, 587) as server: # Probemos puerto 587
-            server.starttls(context=context)
+        with smtplib.SMTP_SSL(settings.EMAIL_HOST, settings.EMAIL_PORT, context=get_ssl_context()) as server:
             server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             server.send_message(msg)
-        print(f"Correo enviado exitosamente a {recipient}")
     except Exception as e:
-        print(f"Error SMTP detectado: {e}")
-    
-if hasattr(ssl, '_create_unverified_context'):
-    ssl._create_default_https_context = ssl._create_unverified_context
+        print(f"Error SMTP: {e}")
 
+# --- CORREO AUTOMÁTICO AL CERRAR ---
+def enviar_correo_estado(ticket):
+    enviar_correo_profesional(
+        ticket, 
+        f"Ticket Cerrado: #{ticket.id} - {ticket.titulo}",
+        f"Tu ticket ha sido marcado como CERRADO. Solución: {"" or 'No especificada'}."
+    )
+
+# --- CORREO MANUAL DESDE EL DETALLE ---
 @agente_or_superuser_required
 def enviar_respuesta_correo(request, tikect_id):
-    tikect = get_object_or_404(Tickets, id=tikect_id)
-    
+    ticket = get_object_or_404(Tickets, id=tikect_id)
     if request.method == 'POST':
-        mensaje_personalizado = request.POST.get('mensaje', '').strip()
-        
-        if mensaje_personalizado:
-            # Reutilizamos la lógica del contexto SSL que creamos antes
-            subject = f"Respuesta de Soporte EMVEPRO - Ticket #{tikect.id}"
-            msg = EmailMessage()
-            msg['Subject'] = subject
-            msg['From'] = settings.DEFAULT_FROM_EMAIL
-            msg['To'] = tikect.usuario.email
-            msg.set_content(mensaje_personalizado)
-            
-            # Usamos el contexto para ignorar el certificado autofirmado
-            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            
-            try:
-                with smtplib.SMTP_SSL(settings.EMAIL_HOST, settings.EMAIL_PORT, context=context) as server:
-                    server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-                    server.send_message(msg)
-                messages.success(request, "Respuesta enviada al usuario con éxito.")
-            except Exception as e:
-                messages.error(request, f"Error al enviar: {e}")
-        
-    return redirect('detalle_tikect', tikect_id=tikect.id)
+        mensaje = request.POST.get('mensaje', '').strip()
+        if mensaje:
+            enviar_correo_profesional(
+                ticket, 
+                f"Respuesta de Soporte EMVEPRO - Ticket #{ticket.id}", 
+                mensaje
+            )
+            messages.success(request, "Respuesta enviada correctamente con formato profesional.")
+    return redirect('detalle_tikect', tikect_id=ticket.id)

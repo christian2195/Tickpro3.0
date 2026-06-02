@@ -1,130 +1,99 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Agentes Genéricos {% endblock %}
+{% block title %}Agentes Genéricos | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<!-- Encabezado de página -->
-<div class="page-header">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1>
-                <i class="fas fa-users-cog me-3"></i> AGENTES GENÉRICOS
-            </h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'configuracion' %}">Configuración</a></li>
-                    <li class="breadcrumb-item active">Agentes Genéricos</li>
-                </ol>
-            </nav>
-        </div>
-    </div>
-</div>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+    .table-modern { border-collapse: separate; border-spacing: 0 10px; }
+    .table-modern tbody tr { background: white; border-radius: 12px; }
+    .table-modern tbody td { padding: 15px; border: none; }
+</style>
 
-<div class="container">
-    <!-- Botón de acción -->
-    <div class="mb-4">
-        <a href="{% url 'agente_generico' %}" class="btn btn-success">
-            <i class="fas fa-plus-circle me-2"></i> Nueva Asignación Genérica
+<div class="container-fluid animate__animated animate__fadeIn">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-users-cog me-2 text-primary"></i> Agentes Genéricos</h2>
+        <a href="{% url 'agente_generico' %}" class="btn btn-success rounded-pill px-4 shadow-sm">
+            <i class="fas fa-plus-circle me-1"></i> Nueva Asignación
         </a>
     </div>
 
-    <!-- Tabla de asignaciones -->
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="fas fa-list me-2"></i> Listado de Asignaciones Genéricas</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Servicio</th>
-                            <th>Agente Actual</th>
-                            <th>Agente Reasignación</th>
-                            <th>Tiempo Reasignación</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for asignacion in asignaciones %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td>
-                                <strong>{{ asignacion.servicio.nombre }}</strong>
-                            </td>
-                            <td>
-                                <i class="fas fa-user-tie text-primary me-1"></i>
-                                {{ asignacion.agente_actual.nombre_usuario }}
-                                <small class="d-block text-muted">{{ asignacion.agente_actual.nombre }} {{ asignacion.agente_actual.apellido }}</small>
-                            </td>
-                            <td>
-                                {% if asignacion.agente_reasignacion %}
-                                    <i class="fas fa-user-clock text-warning me-1"></i>
-                                    {{ asignacion.agente_reasignacion.nombre_usuario }}
-                                {% else %}
-                                    <span class="text-muted">No configurado</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if asignacion.tiempo_reasignacion %}
-                                    <span class="badge bg-info">{{ asignacion.tiempo_reasignacion }} minutos</span>
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-danger" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#confirmModal" 
-                                        data-asignacion-id="{{ asignacion.id }}"
-                                        data-servicio="{{ asignacion.servicio.nombre }}">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center py-4">
-                                <i class="fas fa-info-circle text-muted fa-2x mb-2"></i>
-                                <p class="text-muted mb-0">No hay asignaciones genéricas configuradas.</p>
-                                <a href="{% url 'agente_generico' %}" class="btn btn-sm btn-primary mt-3">
-                                    <i class="fas fa-plus-circle me-2"></i> Crear primera asignación
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+    <!-- Tabla -->
+    <div class="glass-card p-4">
+        <div class="table-responsive">
+            <table class="table table-modern align-middle" id="agentesGenTable">
+                <thead class="text-muted small text-uppercase">
+                    <tr><th>#</th><th>Servicio</th><th>Agente Actual</th><th>Reasignación</th><th>Tiempo (min)</th><th>Acciones</th></tr>
+                </thead>
+                <tbody>
+                    {% for asignacion in asignaciones %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><strong class="text-dark">{{ asignacion.servicio.nombre }}</strong></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user-tie text-primary me-2"></i>
+                                <div>
+                                    <div class="fw-bold">{{ asignacion.agente_actual.nombre_usuario }}</div>
+                                    <small class="text-muted">{{ asignacion.agente_actual.nombre }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if asignacion.agente_reasignacion %}
+                                <span class="badge bg-warning text-dark rounded-pill">{{ asignacion.agente_reasignacion.nombre_usuario }}</span>
+                            {% else %}
+                                <span class="text-muted small">No configurado</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if asignacion.tiempo_reasignacion %}
+                                <span class="badge bg-info text-white rounded-pill">{{ asignacion.tiempo_reasignacion }} min</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" 
+                                    data-bs-toggle="modal" data-bs-target="#confirmModal" 
+                                    data-id="{{ asignacion.id }}" data-servicio="{{ asignacion.servicio.nombre }}">
+                                <i class="fas fa-trash-alt me-1"></i> Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center py-4 text-muted">No hay asignaciones configuradas.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
-<!-- Modal de confirmación -->
+<!-- Modal de Eliminación -->
 <div class="modal fade" id="confirmModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-exclamation-triangle me-2"></i> Confirmar Eliminación
-                </h5>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title">Confirmar eliminación</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <p id="modalMessage">¿Está seguro de que desea eliminar esta asignación genérica?</p>
-                <p class="text-muted small">Esta acción no se puede deshacer.</p>
+            <div class="modal-body py-4 text-center">
+                ¿Eliminar la configuración para el servicio <strong id="servicioNombre"></strong>?
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i> Cancelar
-                </button>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
                 <form id="deleteForm" method="post" class="d-inline">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash-alt me-2"></i> Eliminar
-                    </button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">Eliminar</button>
                 </form>
             </div>
         </div>
@@ -132,20 +101,12 @@
 </div>
 
 <script>
-    // Manejar el modal de confirmación
-    document.addEventListener('DOMContentLoaded', function() {
-        var confirmModal = document.getElementById('confirmModal');
-        confirmModal.addEventListener('show.bs.modal', function(event) {
-            var button = event.relatedTarget;
-            var asignacionId = button.getAttribute('data-asignacion-id');
-            var servicio = button.getAttribute('data-servicio');
-            
-            var modalMessage = document.getElementById('modalMessage');
-            modalMessage.innerHTML = `¿Está seguro de que desea eliminar la asignación genérica para el servicio <strong>${servicio}</strong>?`;
-            
-            var deleteForm = document.getElementById('deleteForm');
-            deleteForm.action = '{% url "eliminar_asignacion" 0 %}'.replace('0', asignacionId);
-        });
+    var confirmModal = document.getElementById('confirmModal');
+    confirmModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        document.getElementById('servicioNombre').textContent = button.getAttribute('data-servicio');
+        var deleteForm = document.getElementById('deleteForm');
+        deleteForm.action = '{% url "eliminar_asignacion" 0 %}'.replace('0', button.getAttribute('data-id'));
     });
 </script>
 {% endblock %}

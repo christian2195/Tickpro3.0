@@ -1,64 +1,100 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Cliente | Tickpro 3.0{% endblock %}
 
 {% block content %}
-    <div class="container mt-5">
-        <!-- Título principal -->
-        <h1 class="text-center mb-4 text-primary">
-            <i class="fas fa-user-plus me-2"></i> Crear Cliente
-        </h1>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+</style>
 
-        <!-- Formulario de registro de clientes -->
-        <form method="post" class="shadow p-4 rounded bg-light">
-            {% csrf_token %}
-            
-            <!-- Campo de Nombre -->
-            <div class="mb-3">
-                <label for="nombre" class="form-label">Nombre:</label>
-                <input type="text" class="form-control" id="nombre" name="nombre" required>
-            </div>
-
-            <!-- Campo de Apellido -->
-            <div class="mb-3">
-                <label for="apellido" class="form-label">Apellido:</label>
-                <input type="text" class="form-control" id="apellido" name="apellido" required>
-            </div>
-
-            <!-- Campo de Nombre de usuario -->
-            <div class="mb-3">
-                <label for="username" class="form-label">Nombre de usuario:</label>
-                <input type="text" class="form-control" id="username" name="username" required>
-            </div>
-
-            <!-- Campo de Correo Electrónico -->
-            <div class="mb-3">
-                <label for="email" class="form-label">Correo Electrónico:</label>
-                <input type="email" class="form-control" id="email" name="email" placeholder="No es obligatorio">
-            </div>
-
-            <!-- Campo de Teléfono -->
-            <div class="mb-3">
-                <label for="telefono" class="form-label">Teléfono:</label>
-                <input type="text" class="form-control" id="telefono" name="telefono" placeholder="No es obligatorio">
-            </div>
-
-            <!-- Campo de Contraseña -->
-            <div class="mb-3">
-                <label for="password" class="form-label">Contraseña:</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-
-            <!-- Campo de Gerencia -->
-            <div class="mb-3">
-                <label for="gerencia" class="form-label">Gerencia:</label>
-                <input type="text" class="form-control" id="gerencia" name="gerencia" required>
-            </div>
-
-            <!-- Botón de envío -->
-            <div class="text-center">
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-check-circle me-2"></i> Registrar Cliente
-                </button>
-            </div>
-        </form>
+<div class="container-fluid animate__animated animate__fadeIn">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-user-plus me-2 text-primary"></i> Nuevo Cliente</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'soporte:dashboard' %}" class="text-decoration-none">Inicio</a></li>
+                <li class="breadcrumb-item active text-primary fw-bold">Crear Cliente</li>
+            </ol>
+        </nav>
     </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="glass-card p-4">
+                <h5 class="fw-bold mb-4 text-center"><i class="fas fa-id-card me-2 text-primary"></i> Información del Usuario</h5>
+                
+                <form method="POST" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Nombre</label>
+                            <input type="text" name="nombre" class="form-control rounded-pill" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Apellido</label>
+                            <input type="text" name="apellido" class="form-control rounded-pill" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre de usuario</label>
+                        <input type="text" name="username" class="form-control rounded-pill" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Correo Electrónico (Opcional)</label>
+                            <input type="email" name="email" class="form-control rounded-pill" placeholder="ejemplo@correo.com">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Teléfono (Opcional)</label>
+                            <input type="text" name="telefono" class="form-control rounded-pill">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Contraseña</label>
+                        <input type="password" name="password" class="form-control rounded-pill" placeholder="••••••••" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Gerencia</label>
+                        <input type="text" name="gerencia" class="form-control rounded-pill" placeholder="Ej: Tecnología" required>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 shadow-sm">
+                            <i class="fas fa-check-circle me-2"></i> Registrar Cliente
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+        var forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms).forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
 {% endblock %}

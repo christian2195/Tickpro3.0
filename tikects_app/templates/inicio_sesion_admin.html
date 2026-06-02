@@ -5,102 +5,82 @@
 
 {% block content %}
 <style>
+    /* Fondo con desenfoque para dar profundidad */
     body {
-        background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url("{% static 'tikects_app/fondo-inicio.jpg' %}");
+        background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url("{% static 'tikects_app/fondo-inicio.jpg' %}");
         background-size: cover;
         background-position: center;
-        background-repeat: no-repeat;
         background-attachment: fixed;
         min-height: 100vh;
     }
-    /* Filtro frosted glass para que la tarjeta resalte */
-    .card {
-        background-color: rgba(255, 255, 255, 0.95) !important;
-        backdrop-filter: blur(5px);
-        border: none !important;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+
+    /* Tarjeta estilo macOS Glassmorphism */
+    .card-login {
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 24px !important;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
+        overflow: hidden;
     }
 </style>
 
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5">
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-primary text-white text-center py-4">
-                    <i class="fas fa-ticket-alt fa-3x mb-3"></i>
-                    <h3 class="mb-0">TickPro</h3>
-                    <p class="mb-0">Sistema de Gestión de Tickets</p>
+            <div class="card card-login border-0 shadow-lg animate__animated animate__fadeInUp">
+                <!-- Header con degradado suave -->
+                <div class="card-header bg-transparent text-center py-4 border-0">
+                    <i class="fas fa-ticket-alt fa-3x mb-3 text-primary"></i>
+                    <h3 class="mb-0 fw-bold">TickPro <span class="fw-light">3.0</span></h3>
+                    <p class="text-muted small">Gerencia de Tecnología e Información</p>
                 </div>
+                
                 <div class="card-body p-5">
-                    <h4 class="text-center mb-4">
-                        <i class="fas fa-user-circle me-2"></i>Bienvenidos
+                    <h4 class="text-center mb-4 text-dark fw-semibold">
+                        <i class="fas fa-user-circle me-2"></i>Bienvenido
                     </h4>
                     
                     {% if error %}
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                            {{ error }}
+                        <div class="alert alert-danger alert-dismissible fade show rounded-pill" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     {% endif %}
 
                     <form method="POST" id="loginForm">
                         {% csrf_token %}
-                        
                         <div class="mb-4">
-                            <label for="username" class="form-label">
-                                <i class="fas fa-user me-2"></i>Usuario
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                <input type="text" class="form-control" id="username" name="username" 
-                                       placeholder="Ingrese su usuario" required autofocus>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-0"><i class="fas fa-user text-primary"></i></span>
+                                <input type="text" class="form-control bg-light border-0" id="username" name="username" placeholder="Usuario" required autofocus>
                             </div>
                         </div>
 
                         <div class="mb-3"> 
-                            <label for="clave" class="form-label">
-                                <i class="fas fa-lock me-2"></i>Contraseña
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                <input type="password" class="form-control" id="clave" name="clave" 
-                                       placeholder="Ingrese su contraseña" required>
-                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-0"><i class="fas fa-lock text-primary"></i></span>
+                                <input type="password" class="form-control bg-light border-0" id="clave" name="clave" placeholder="Contraseña" required>
+                                <button class="btn btn-light border-0" type="button" id="togglePassword"><i class="fas fa-eye"></i></button>
                             </div>
                         </div>
 
                         <div class="text-end mb-4">
-                            <a href="{% url 'password_reset' %}" class="text-decoration-none small fw-bold text-primary">
-                                ¿Olvidaste tu contraseña?
-                            </a>
+                            <a href="{% url 'password_reset' %}" class="text-decoration-none small fw-bold text-primary">¿Olvidaste tu contraseña?</a>
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg" id="submitButton">
-                                <span id="buttonText">
-                                    <i class="fas fa-sign-in-alt me-2"></i> Ingresar
-                                </span>
-                                <span id="loadingSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill" id="submitButton">
+                                <span id="buttonText"><i class="fas fa-sign-in-alt me-2"></i> Ingresar</span>
+                                <span id="loadingSpinner" class="spinner-border spinner-border-sm d-none"></span>
                             </button>
                         </div>
                     </form>
-
-                    <hr class="my-4">
-
-                    <div class="text-center text-muted">
-                        <small>
-                            <i class="fas fa-shield-alt me-1"></i>
-                             Todos los derechos reservados
-                        </small>
-                    </div>
                 </div>
-                <div class="card-footer text-center py-3">
-                    <small class="text-muted">
-                        © {% now "Y" %} Versión 1.0
-                    </small>
+                
+                <div class="card-footer bg-transparent border-0 text-center pb-4">
+                    <small class="text-muted">© 2026 Tickpro 3.0 | Gerencia de Tecnología</small>
                 </div>
             </div>
         </div>
@@ -108,31 +88,17 @@
 </div>
 
 <script>
-    // Mostrar/ocultar contraseña
     document.getElementById('togglePassword').addEventListener('click', function() {
         const passwordInput = document.getElementById('clave');
         const icon = this.querySelector('i');
-        
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
-        } else {
-            passwordInput.type = 'password';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
-        }
+        passwordInput.type = (passwordInput.type === 'password') ? 'text' : 'password';
+        icon.className = (passwordInput.type === 'text') ? 'fas fa-eye-slash' : 'fas fa-eye';
     });
 
-    // Loading button
-    document.getElementById('loginForm').addEventListener('submit', function(event) {
-        const submitButton = document.getElementById('submitButton');
-        const buttonText = document.getElementById('buttonText');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-
-        submitButton.disabled = true;
-        buttonText.classList.add('d-none');
-        loadingSpinner.classList.remove('d-none');
+    document.getElementById('loginForm').addEventListener('submit', function() {
+        document.getElementById('submitButton').disabled = true;
+        document.getElementById('buttonText').classList.add('d-none');
+        document.getElementById('loadingSpinner').classList.remove('d-none');
     });
 </script>
 {% endblock %}

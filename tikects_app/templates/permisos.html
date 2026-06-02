@@ -1,180 +1,115 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Gestión de Permisos {% endblock %}
+{% block title %}Gestión de Permisos | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<!-- Encabezado de página -->
-<div class="page-header">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1>
-                <i class="fas fa-key me-3"></i> GESTIÓN DE PERMISOS
-            </h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'pagina_principal' %}">Inicio</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'configuracion' %}">Configuración</a></li>
-                    <li class="breadcrumb-item active">Permisos</li>
-                </ol>
-            </nav>
-        </div>
-    </div>
-</div>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+    .table-modern { border-collapse: separate; border-spacing: 0 10px; }
+    .table-modern tbody tr { background: white; border-radius: 12px; }
+    .table-modern tbody td { padding: 15px; border: none; }
+</style>
 
-<div class="container">
-    <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i>
-        Administra los permisos de los usuarios en los diferentes grupos del sistema.
+<div class="container-fluid animate__animated animate__fadeIn">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-key me-2 text-primary"></i> Gestión de Permisos</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'pagina_principal' %}" class="text-decoration-none">Inicio</a></li>
+                <li class="breadcrumb-item active text-primary fw-bold">Permisos</li>
+            </ol>
+        </nav>
     </div>
 
     <div class="row">
         <!-- Tabla de Agentes -->
         <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-user-tie me-2"></i> Agentes del Sistema
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Usuario</th>
-                                    <th>Nombre Completo</th>
-                                    <th>Permisos</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for agente in agentes %}
-                                <tr>
-                                    <td>{{ forloop.counter }}</td>
-                                    <td>
-                                        <strong>{{ agente.usuario.username }}</strong>
-                                    </td>
-                                    <td>{{ agente.nombre }} {{ agente.apellido }}</td>
-                                    <td>
-                                        {% if agente.usuario.is_superuser %}
-                                            <span class="badge bg-danger" data-bs-toggle="tooltip" title="Acceso total al sistema">
-                                                <i class="fas fa-crown me-1"></i> Superusuario
-                                            </span>
-                                        {% elif agente.usuario.is_staff %}
-                                            <span class="badge bg-warning text-dark" data-bs-toggle="tooltip" title="Puede acceder al panel de administración">
-                                                <i class="fas fa-tools me-1"></i> Staff
-                                            </span>
-                                        {% else %}
-                                            <span class="badge bg-info" data-bs-toggle="tooltip" title="Permisos básicos de agente">
-                                                <i class="fas fa-user me-1"></i> Agente
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="4" class="text-center">No hay agentes registrados</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card-footer text-muted">
-                    <small>Total: {{ agentes|length }} agente(s)</small>
+            <div class="glass-card p-4">
+                <h5 class="fw-bold mb-3"><i class="fas fa-user-tie me-2 text-primary"></i> Agentes del Sistema</h5>
+                <div class="table-responsive">
+                    <table class="table table-modern align-middle">
+                        <thead class="text-muted small text-uppercase">
+                            <tr><th>#</th><th>Usuario</th><th>Nombre</th><th>Permisos</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for agente in agentes %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td><strong class="text-dark">{{ agente.usuario.username }}</strong></td>
+                                <td>{{ agente.nombre }} {{ agente.apellido }}</td>
+                                <td>
+                                    {% if agente.usuario.is_superuser %}
+                                        <span class="badge rounded-pill bg-danger px-3"><i class="fas fa-crown me-1"></i> Superusuario</span>
+                                    {% elif agente.usuario.is_staff %}
+                                        <span class="badge rounded-pill bg-warning text-dark px-3"><i class="fas fa-tools me-1"></i> Staff</span>
+                                    {% else %}
+                                        <span class="badge rounded-pill bg-info px-3"><i class="fas fa-user me-1"></i> Agente</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-4 text-muted">No hay agentes registrados</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
         <!-- Tabla de Grupos -->
         <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-users me-2"></i> Grupos de Agentes
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Nombre del Grupo</th>
-                                    <th>Descripción</th>
-                                    <th>Miembros</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for grupo in grupos %}
-                                <tr>
-                                    <td>{{ forloop.counter }}</td>
-                                    <td>
-                                        <strong>{{ grupo.nombre }}</strong>
-                                    </td>
-                                    <td>{{ grupo.descripcion|truncatechars:50 }}</td>
-                                    <td>
-                                        <span class="badge bg-secondary" data-bs-toggle="tooltip" 
-                                              title="Agentes en este grupo">
-                                            <i class="fas fa-users me-1"></i>
-                                            {{ grupo.agentes_por_grupos_set.count }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="4" class="text-center">No hay grupos creados</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card-footer text-muted">
-                    <small>Total: {{ grupos|length }} grupo(s)</small>
+            <div class="glass-card p-4">
+                <h5 class="fw-bold mb-3"><i class="fas fa-users me-2 text-success"></i> Grupos de Agentes</h5>
+                <div class="table-responsive">
+                    <table class="table table-modern align-middle">
+                        <thead class="text-muted small text-uppercase">
+                            <tr><th>#</th><th>Nombre</th><th>Descripción</th><th>Miembros</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for grupo in grupos %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td><strong class="text-dark">{{ grupo.nombre }}</strong></td>
+                                <td>{{ grupo.descripcion|truncatechars:40 }}</td>
+                                <td>
+                                    <span class="badge rounded-pill bg-secondary px-3">
+                                        <i class="fas fa-users me-1"></i> {{ grupo.agentes_por_grupos_set.count }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-4 text-muted">No hay grupos creados</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Leyenda de permisos -->
-    <div class="card">
-        <div class="card-header bg-secondary text-white">
-            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Leyenda de Permisos</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4">
-                    <p class="mb-2">
-                        <span class="badge bg-danger">Superusuario</span>
-                        - Acceso total a todas las funcionalidades del sistema.
-                    </p>
-                </div>
-                <div class="col-md-4">
-                    <p class="mb-2">
-                        <span class="badge bg-warning text-dark">Staff</span>
-                        - Acceso al panel de administración de Django.
-                    </p>
-                </div>
-                <div class="col-md-4">
-                    <p class="mb-2">
-                        <span class="badge bg-info">Agente</span>
-                        - Permisos básicos para gestión de tickets.
-                    </p>
-                </div>
-            </div>
+    <!-- Leyenda -->
+    <div class="glass-card p-4">
+        <h6 class="fw-bold mb-3"><i class="fas fa-info-circle me-2 text-secondary"></i> Leyenda de Permisos</h6>
+        <div class="row text-muted small">
+            <div class="col-md-4"><span class="badge bg-danger">Superusuario</span> Acceso total al sistema.</div>
+            <div class="col-md-4"><span class="badge bg-warning text-dark">Staff</span> Panel de administración.</div>
+            <div class="col-md-4"><span class="badge bg-info">Agente</span> Gestión básica de tickets.</div>
         </div>
     </div>
 </div>
 
 <script>
-    // Inicializar tooltips
     document.addEventListener('DOMContentLoaded', function() {
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function(tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
+        tooltipTriggerList.map(function(el) { return new bootstrap.Tooltip(el); });
     });
 </script>
 {% endblock %}

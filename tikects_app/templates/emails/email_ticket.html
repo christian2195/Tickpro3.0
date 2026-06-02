@@ -16,7 +16,7 @@
 <body>
     <div class="card">
         <div class="header">
-            <h2>Tickpro 2.0 - Gestión de Soporte</h2>
+            <h2>Tickpro 3.0 - Gestión de Soporte</h2>
         </div>
         <div class="body">
             <h3 style="color: #0d6efd; margin-top: 0;">{{ saludo }}</h3>
@@ -28,10 +28,6 @@
                 <p style="margin: 4px 0;"><strong>Prioridad:</strong> <span class="badge">{{ ticket.prioridad|upper }}</span></p>
             </div>
 
-            <p>Puedes hacer seguimiento al avance o añadir comentarios pulsando el siguiente botón:</p>
-            <div style="text-align: center;">
-                <a href="http://10.12.12.45:8000/tickets/detalle/{{ ticket.id }}/" class="btn">Ver estado del Ticket</a>
-            </div>
         </div>
         <div class="footer">
             <p>Este es un correo automático generado por la Intranet de <strong>EMVEPRO</strong>.<br>Por favor no respondas directamente a este mensaje.</p>

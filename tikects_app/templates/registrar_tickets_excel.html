@@ -1,129 +1,74 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Registrar Tickets desde Excel{% endblock %}
+{% block title %}Carga Masiva | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1>
-                <i class="fas fa-file-excel me-3"></i> REGISTRO MASIVO DE TICKETS
-            </h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'pagina_principal' %}">Inicio</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'configuracion' %}">Configuración</a></li>
-                    <li class="breadcrumb-item active">Registro Masivo</li>
-                </ol>
-            </nav>
-        </div>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+</style>
+
+<div class="container-fluid animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-file-excel me-2 text-success"></i> Registro Masivo</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'soporte:dashboard' %}" class="text-decoration-none">Inicio</a></li>
+                <li class="breadcrumb-item active text-primary fw-bold">Registro Masivo</li>
+            </ol>
+        </nav>
     </div>
-</div>
 
-<div class="container">
     <div class="row">
-        <div class="col-md-8 mx-auto">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="col-lg-8 mx-auto">
+            <div class="glass-card p-4 mb-4">
+                <h5 class="fw-bold mb-3"><i class="fas fa-info-circle me-2 text-primary"></i> Instrucciones de Carga</h5>
+                <p class="text-muted small">Selecciona un archivo <code>.xlsx</code> para importar tu histórico de tickets.</p>
+                <div class="bg-light p-3 rounded-3 border">
+                    <p class="mb-2 small fw-bold">El archivo debe contener:</p>
+                    <div class="row small text-muted">
+                        <div class="col-6">• IDdelcliente (Email)<br>• Cola<br>• Servicio</div>
+                        <div class="col-6">• Título<br>• Creado (AAAA-MM-DD)<br>• Estado (abierto/cerrado)</div>
                     </div>
-                {% endfor %}
-            {% endif %}
-
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-upload me-2"></i> Carga de Tickets desde Excel</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i> Instrucciones de Carga:</h6>
-                        <p class="mb-2">Selecciona un archivo Excel (<code>.xlsx</code>) desde tu equipo para importar el histórico masivo de tickets al sistema.</p>
-                        <p class="mb-0">El archivo debe contener estrictamente las siguientes columnas organizadas:</p>
-                        <ul class="mb-0 mt-2">
-                            <li><strong>IDdelcliente</strong> - Correo institucional del cliente asignado</li>
-                            <li><strong>Cola</strong> - Nombre de la cola de atención técnica</li>
-                            <li><strong>Servicio</strong> - Nombre del servicio asociado</li>
-                            <li><strong>Título</strong> - Título descriptivo del caso</li>
-                            <li><strong>Creado</strong> - Fecha de apertura (Formato: AAAA-MM-DD HH:MM:SS)</li>
-                            <li><strong>Fechadecierre</strong> - Fecha de resolución (Formato: AAAA-MM-DD HH:MM:SS)</li>
-                            <li><strong>Estado</strong> - "cerrado" o "abierto"</li>
-                        </ul>
-                    </div>
-
-                    <form method="POST" enctype="multipart/form-data" class="mt-4">
-                        {% csrf_token %}
-                        
-                        <div class="mb-4">
-                            <label for="archivo_excel" class="form-label fw-bold">Seleccionar Archivo Digital (.xlsx):</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="fas fa-file-excel text-success"></i></span>
-                                <input type="file" class="form-control" id="archivo_excel" name="archivo_excel" accept=".xlsx, .xls" required>
-                            </div>
-                            <div class="form-text text-muted small mt-1">
-                                <i class="fas fa-exclamation-circle me-1"></i> Asegúrate de que los correos electrónicos pertenezcan a clientes previamente registrados.
-                            </div>
-                        </div>
-
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <strong>Consideraciones Importantes:</strong>
-                            <ul class="mb-0 mt-2">
-                                <li>El sistema buscará a los clientes por su correo institucional de forma unívoca.</li>
-                                <li>Si una cola o un servicio no existe en la BD de Tickpro 2.0, el script los creará automáticamente sobre la marcha de forma segura.</li>
-                                <li>El procesamiento de las fechas limpiará cadenas complejas y marcas de zona horaria automáticamente.</li>
-                            </ul>
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center mt-4">
-                            <a href="{% url 'ver_tikects' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-2"></i> Volver a Soporte
-                            </a>
-                            <button type="submit" class="btn btn-success" id="submitBtn">
-                                <span id="buttonText">
-                                    <i class="fas fa-cloud-upload-alt me-2"></i> Procesar e Importar Tickets
-                                </span>
-                                <span id="loadingSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
-                            </button>
-                        </div>
-                    </form>
                 </div>
             </div>
 
-            <div class="card mt-4 mb-5">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0"><i class="fas fa-table me-2"></i> Estructura Requerida de Ejemplo</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-sm text-center mb-0" style="font-size: 0.85rem;">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>IDdelcliente</th>
-                                    <th>Cola</th>
-                                    <th>Servicio</th>
-                                    <th>Título</th>
-                                    <th>Creado</th>
-                                    <th>Fechadecierre</th>
-                                    <th>Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="text-start">abel.chacon@emvepro.gob.ve</td>
-                                    <td>Soporte</td>
-                                    <td>Técnico</td>
-                                    <td class="text-start">Problema con impresora de red</td>
-                                    <td>2026-05-15 10:30:00</td>
-                                    <td>2026-05-16 14:20:00</td>
-                                    <td><span class="badge bg-danger">cerrado</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
+            <div class="glass-card p-4">
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Seleccionar Archivo Excel (.xlsx)</label>
+                        <input type="file" class="form-control rounded-pill" name="archivo_excel" accept=".xlsx, .xls" required>
                     </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'ver_tikects' %}" class="btn btn-outline-secondary rounded-pill px-4">Volver</a>
+                        <button type="submit" class="btn btn-success rounded-pill px-4 shadow-sm" id="submitBtn">
+                            <span id="buttonText"><i class="fas fa-cloud-upload-alt me-2"></i> Procesar Importación</span>
+                            <span id="loadingSpinner" class="spinner-border spinner-border-sm d-none"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="glass-card p-4 mt-4">
+                <h6 class="fw-bold mb-3"><i class="fas fa-table me-2 text-secondary"></i> Estructura de ejemplo</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered text-center small mb-0">
+                        <thead class="table-light">
+                            <tr><th>IDdelcliente</th><th>Cola</th><th>Servicio</th><th>Estado</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>abel.chacon@emvepro.gob.ve</td><td>Soporte</td><td>Técnico</td><td>cerrado</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -131,15 +76,11 @@
 </div>
 
 <script>
-    // Manejo visual interactivo del estado de carga en el envío
-    document.querySelector('form').addEventListener('submit', function(event) {
-        const submitBtn = document.getElementById('submitBtn');
-        const buttonText = document.getElementById('buttonText');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-
-        submitBtn.disabled = true;
-        buttonText.classList.add('d-none');
-        loadingSpinner.classList.remove('d-none');
+    document.getElementById('uploadForm').addEventListener('submit', function() {
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        document.getElementById('buttonText').classList.add('d-none');
+        document.getElementById('loadingSpinner').classList.remove('d-none');
     });
 </script>
 {% endblock %}

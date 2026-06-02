@@ -1,91 +1,66 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Editar Gerencia {% endblock %}
+{% block title %}Editar Gerencia | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<!-- Encabezado de página -->
-<div class="page-header">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1>
-                <i class="fas fa-edit me-3"></i> EDITAR DIRECCIÓN
-            </h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'configuracion' %}">Configuración</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'ver_gerencias' %}">Gerencias</a></li>
-                    <li class="breadcrumb-item active">Editar Gerencia</li>
-                </ol>
-            </nav>
-        </div>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+</style>
+
+<div class="container-fluid animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-edit me-2 text-primary"></i> Editar Gerencia</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'configuracion' %}" class="text-decoration-none">Configuración</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'ver_gerencias' %}" class="text-decoration-none">Gerencias</a></li>
+                <li class="breadcrumb-item active text-primary fw-bold">Editar</li>
+            </ol>
+        </nav>
     </div>
-</div>
 
-<div class="container">
-    <!-- Mensajes -->
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="fas fa-building me-2"></i> Datos de la Gerencia</h5>
-        </div>
-        <div class="card-body">
-            <form method="post" class="needs-validation" novalidate>
-                {% csrf_token %}
+    <div class="row">
+        <div class="col-md-7 mx-auto">
+            <div class="glass-card p-4">
+                <h5 class="fw-bold mb-4"><i class="fas fa-building me-2 text-primary"></i> Modificar datos de la unidad</h5>
                 
-                <div class="row">
-                    <!-- Nombre -->
-                    <div class="col-md-12 mb-3">
-                        <label for="nombre" class="form-label">Nombre de la Gerencia <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="nombre" name="nombre" 
-                               value="{{ gerencia.nombre }}" required>
-                        <div class="invalid-feedback">El nombre es obligatorio.</div>
+                <form method="POST" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre de la Gerencia <span class="text-danger">*</span></label>
+                        <input type="text" name="nombre" class="form-control rounded-pill" value="{{ gerencia.nombre }}" required>
                     </div>
 
-                    <!-- Descripción -->
-                    <div class="col-md-12 mb-3">
-                        <label for="descripcion" class="form-label">Descripción <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="descripcion" name="descripcion" 
-                                  rows="4" required>{{ gerencia.descripcion }}</textarea>
-                        <div class="invalid-feedback">La descripción es obligatoria.</div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Descripción <span class="text-danger">*</span></label>
+                        <textarea name="descripcion" class="form-control rounded-3" rows="4" required>{{ gerencia.descripcion }}</textarea>
                     </div>
-                </div>
 
-                <!-- Metadatos -->
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <p class="text-muted small mb-1">
-                            <i class="fas fa-calendar-alt me-1"></i> Fecha de creación: 
-                            {{ gerencia.fecha_creacion|date:"d/m/Y H:i" }}
-                        </p>
+                    <div class="mb-4 p-3 bg-light rounded-3 text-muted small">
+                        <i class="fas fa-calendar-alt me-2"></i> Creado el: {{ gerencia.fecha_creacion|date:"d/m/Y H:i" }}
                     </div>
-                </div>
 
-                <!-- Botones de acción -->
-                <div class="text-end mt-4">
-                    <a href="{% url 'ver_gerencias' %}" class="btn btn-secondary me-2">
-                        <i class="fas fa-arrow-left me-2"></i> Cancelar
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i> Guardar Cambios
-                    </button>
-                </div>
-            </form>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'ver_gerencias' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                            <i class="fas fa-save me-2"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Validación de formulario Bootstrap
     (function() {
         'use strict';
         var forms = document.querySelectorAll('.needs-validation');

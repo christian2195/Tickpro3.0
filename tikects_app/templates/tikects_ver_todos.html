@@ -2,243 +2,102 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}Todos los Tickets {% endblock %}
+{% block title %}Todos los Tickets | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<!-- Encabezado de página -->
-<div class="page-header">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1>
-                <i class="fas fa-ticket-alt me-3"></i> TODOS LOS TICKETS
-            </h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'pagina_principal' %}">Inicio</a></li>
-                    <li class="breadcrumb-item active">Todos los Tickets</li>
-                </ol>
-            </nav>
-        </div>
-    </div>
-</div>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+    .table-modern { border-collapse: separate; border-spacing: 0 10px; }
+    .table-modern tbody tr { background: white; border-radius: 12px; }
+    .table-modern tbody td { padding: 15px; border: none; }
+</style>
 
-<div class="container">
-    <!-- Filtros y búsqueda -->
+<div class="container-fluid animate__animated animate__fadeIn">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-list me-2 text-primary"></i> Gestión de Tickets</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'soporte:dashboard' %}" class="text-decoration-none">Inicio</a></li>
+                <li class="breadcrumb-item active text-primary fw-bold">Todos los Tickets</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Filtros y Búsqueda -->
     <div class="row mb-4">
         <div class="col-md-8">
             <div class="btn-group" role="group">
-                <a href="{% url 'ver_tikects' %}" class="btn {% if request.resolver_match.url_name == 'ver_tikects' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                    <i class="fas fa-list me-2"></i> Todos
-                </a>
-                <a href="{% url 'ver_tikects_abiertos' %}" class="btn {% if request.resolver_match.url_name == 'ver_tikects_abiertos' %}btn-success{% else %}btn-outline-success{% endif %}">
-                    <i class="fas fa-folder-open me-2"></i> Abiertos
-                </a>
-                <a href="{% url 'ver_tikects_cerrados' %}" class="btn {% if request.resolver_match.url_name == 'ver_tikects_cerrados' %}btn-danger{% else %}btn-outline-danger{% endif %}">
-                    <i class="fas fa-check-circle me-2"></i> Cerrados
-                </a>
+                <a href="{% url 'ver_tikects' %}" class="btn {% if request.resolver_match.url_name == 'ver_tikects' %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill px-4">Todos</a>
+                <a href="{% url 'ver_tikects_abiertos' %}" class="btn {% if request.resolver_match.url_name == 'ver_tikects_abiertos' %}btn-success{% else %}btn-outline-success{% endif %} rounded-pill px-4">Abiertos</a>
+                <a href="{% url 'ver_tikects_cerrados' %}" class="btn {% if request.resolver_match.url_name == 'ver_tikects_cerrados' %}btn-danger{% else %}btn-outline-danger{% endif %} rounded-pill px-4">Cerrados</a>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="input-group">
-                <input type="text" class="form-control" placeholder="Buscar tickets..." id="searchInput">
-                <button class="btn btn-primary" type="button" id="searchButton">
-                    <i class="fas fa-search"></i>
-                </button>
-            </div>
+            <input type="text" class="form-control rounded-pill" placeholder="🔍 Buscar ticket..." id="searchInput">
         </div>
     </div>
 
-    <!-- Estadísticas rápidas -->
+    <!-- Estadísticas -->
     <div class="row mb-4">
+        {% for stat in stats %}
         <div class="col-md-3">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h6 class="card-title">Total Tickets</h6>
-                    <h3 class="mb-0">{{ tikects.paginator.count }}</h3>
+            <div class="glass-card p-3 d-flex align-items-center">
+                <div class="p-3 rounded-circle bg-light me-3"><i class="{{ stat.icon }} text-primary"></i></div>
+                <div>
+                    <h6 class="text-muted small mb-0">{{ stat.label }}</h6>
+                    <h4 class="fw-bold mb-0">{{ stat.value }}</h4>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h6 class="card-title">Abiertos</h6>
-                    <h3 class="mb-0">{{ tikects_abiertos|default:"0" }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-danger">
-                <div class="card-body">
-                    <h6 class="card-title">Cerrados</h6>
-                    <h3 class="mb-0">{{ tikects_cerrados|default:"0" }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-info">
-                <div class="card-body">
-                    <h6 class="card-title">Reasignados</h6>
-                    <h3 class="mb-0">{{ tikects_reasignados|default:"0" }}</h3>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 
-    <!-- Tabla de tickets -->
-    <div class="card">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-list me-2"></i> Listado de Tickets</h5>
-            <span class="badge bg-light text-dark">Página {{ tikects.number }} de {{ tikects.paginator.num_pages }}</span>
-        </div>
-        <div class="card-body">
-            {% if tikects %}
-                <div class="table-responsive">
-                    <table class="table table-hover" id="ticketsTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Fecha</th>
-                                <th>Título</th>
-                                <th>Cliente</th>
-                                <th>Gerencia</th>
-                                <th>Servicio</th>
-                                <th>Estado</th>
-                                <th>Reasignado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for tikect in tikects %}
-                            <tr>
-                                <td><strong>#{{ tikect.id }}</strong></td>
-                                <td>
-                                    <small>{{ tikect.fecha_creacion|date:"d/m/Y" }}</small>
-                                    <br>
-                                    <small class="text-muted">{{ tikect.fecha_creacion|date:"h:i A" }}</small>
-                                </td>
-                                <td>
-                                    <a href="{% url 'detalle_tikect' tikect.id %}" class="text-decoration-none fw-bold">
-                                        {{ tikect.titulo|truncatechars:40 }}
-                                    </a>
-                                </td>
-                                <td>{{ tikect.usuario.username }}</td>
-                                <td>{{ tikect.gerencia|truncatechars:20 }}</td>
-                                <td>{{ tikect.servicio.nombre }}</td>
-                                <td>
-                                    {% if tikect.estado == 'cerrado' %}
-                                        <span class="badge bg-danger">Cerrado</span>
-                                    {% else %}
-                                        <span class="badge bg-success">Abierto</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% with reasignado=reasignaciones_dict|get_item:tikect.id %}
-                                        {% if reasignado %}
-                                            <span class="badge bg-info" data-bs-toggle="tooltip" 
-                                                  title="Reasignado a: {{ reasignado }}">
-                                                <i class="fas fa-exchange-alt me-1"></i> Sí
-                                            </span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">No</span>
-                                        {% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{% url 'detalle_tikect' tikect.id %}" class="btn btn-primary" 
-                                           data-bs-toggle="tooltip" title="Ver detalles">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        {% if not tikect.cerrado and request.user.is_superuser %}
-                                            <a href="{% url 'reasignar_tikect' tikect.id %}" class="btn btn-warning"
-                                               data-bs-toggle="tooltip" title="Reasignar">
-                                                <i class="fas fa-exchange-alt"></i>
-                                            </a>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                {% if tikects.paginator.num_pages > 1 %}
-                <nav class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        {% if tikects.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ tikects.previous_page_number }}">
-                                    <i class="fas fa-chevron-left"></i>
-                                </a>
-                            </li>
-                        {% endif %}
-
-                        {% for i in tikects.paginator.page_range %}
-                            {% if tikects.number == i %}
-                                <li class="page-item active">
-                                    <span class="page-link">{{ i }}</span>
-                                </li>
-                            {% elif i > tikects.number|add:'-3' and i < tikects.number|add:'3' %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ i }}">{{ i }}</a>
-                                </li>
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if tikects.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ tikects.next_page_number }}">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-                {% endif %}
-
-            {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-ticket-alt fa-4x text-muted mb-3"></i>
-                    <h5 class="text-muted">No hay tickets disponibles</h5>
-                    <p class="text-muted mb-3">Los tickets que se creen aparecerán aquí.</p>
-                    <a href="{% url 'crear_tikects' %}" class="btn btn-primary">
-                        <i class="fas fa-plus-circle me-2"></i> Crear primer ticket
-                    </a>
-                </div>
-            {% endif %}
+    <!-- Tabla -->
+    <div class="glass-card p-4">
+        <div class="table-responsive">
+            <table class="table table-modern align-middle" id="ticketsTable">
+                <thead class="text-muted small text-uppercase">
+                    <tr><th>ID</th><th>Fecha</th><th>Título</th><th>Cliente</th><th>Gerencia</th><th>Estado</th><th>Acciones</th></tr>
+                </thead>
+                <tbody>
+                    {% for tikect in tikects %}
+                    <tr>
+                        <td class="fw-bold text-primary">#{{ tikect.id }}</td>
+                        <td class="small">{{ tikect.fecha_creacion|date:"d/m/y" }}<br><span class="text-muted">{{ tikect.fecha_creacion|date:"H:i" }}</span></td>
+                        <td class="fw-bold">{{ tikect.titulo|truncatechars:30 }}</td>
+                        <td>{{ tikect.usuario.username }}</td>
+                        <td><small>{{ tikect.gerencia|truncatechars:15 }}</small></td>
+                        <td>
+                            <span class="badge rounded-pill {% if tikect.estado == 'cerrado' %}bg-danger{% else %}bg-success{% endif %} px-3">
+                                {{ tikect.estado|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'detalle_tikect' tikect.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">Ver</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center py-4 text-muted">No hay tickets disponibles.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <script>
-    // Inicializar tooltips
-    document.addEventListener('DOMContentLoaded', function() {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function(tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-
-    // Búsqueda en tiempo real
     document.getElementById('searchInput').addEventListener('keyup', function() {
         var input = this.value.toLowerCase();
-        var rows = document.querySelectorAll('#ticketsTable tbody tr');
-        
-        rows.forEach(function(row) {
-            var text = row.textContent.toLowerCase();
-            if (text.indexOf(input) > -1) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+        document.querySelectorAll('#ticketsTable tbody tr').forEach(function(row) {
+            row.style.display = row.textContent.toLowerCase().indexOf(input) > -1 ? '' : 'none';
         });
     });
-
-    // Auto-refresh cada 30 segundos (opcional, comentar si no se desea)
-    // setTimeout(function(){
-    //     location.reload();
-    // }, 30000);
 </script>
 {% endblock %}

@@ -1,169 +1,110 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Gestión de Roles y Permisos - Tickpro 2.0{% endblock %}
+{% block title %}Roles y Permisos | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-4">
-    <h1 class="mt-4"><i class="fas fa-user-shield me-2 text-primary"></i>Panel de Control: Roles y Permisos</h1>
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="{% url 'pagina_principal' %}">Inicio</a></li>
-        <li class="breadcrumb-item active">Roles y Permisos</li>
-    </ol>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+    .table-modern tbody tr:hover { background: rgba(0,0,0,0.02); }
+</style>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <form method="GET" class="row g-3 align-items-center">
-                <div class="col-md-5">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-                        <input type="text" name="buscar_usuario" class="form-control" placeholder="Buscar por usuario, nombre o apellido..." value="{{ buscar_usuario }}">
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <select name="filtro_rol" class="form-select">
-                        <option value="">-- Todos los Roles --</option>
-                        <option value="is_superuser" {% if filtro_rol == 'is_superuser' %}selected{% endif %}>Superusuarios / Administradores</option>
-                        <option value="is_agente" {% if filtro_rol == 'is_agente' %}selected{% endif %}>Agentes Técnicos</option>
-                        <option value="is_cliente" {% if filtro_rol == 'is_cliente' %}selected{% endif %}>Clientes del Portal</option>
-                    </select>
-                </div>
-                <div class="col-md-3 d-grid">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-filter me-1"></i> Aplicar Filtros</button>
-                </div>
-            </form>
-        </div>
+<div class="container-fluid animate__animated animate__fadeIn">
+    <!-- Encabezado -->
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-user-shield me-2 text-primary"></i> Roles y Permisos</h2>
+        <p class="text-muted">Administración central de accesos y estados de cuenta</p>
     </div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
-            <span><i class="fas fa-users me-1"></i> Cuentas de Usuario Registradas</span>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-striped mb-0 align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-4">Usuario</th>
-                            <th>Nombre Completo</th>
-                            <th>Correo Electrónico</th>
-                            <th>Rol Asignado</th>
-                            <th>Estado de Cuenta</th>
-                            <th class="text-end pe-4">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for u in usuarios %}
-                        <tr>
-                            <td class="ps-4 fw-bold text-secondary">{{ u.username }}</td>
-                            <td>{{ u.get_full_name|default:"Sin Nombre Registrado" }}</td>
-                            <td><span class="text-muted">{{ u.email|default:"---" }}</span></td>
-                            <td>
-                                {% if u.is_superuser %}
-                                    <span class="badge bg-danger px-3 py-2 shadow-sm"><i class="fas fa-crown me-1"></i>Admin / Superuser</span>
-                                {% elif u.agente_set.exists %}
-                                    <span class="badge bg-primary px-3 py-2 shadow-sm"><i class="fas fa-user-cog me-1"></i>Agente Técnico</span>
-                                {% else %}
-                                    <span class="badge bg-success px-3 py-2 shadow-sm"><i class="fas fa-user me-1"></i>Cliente</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if u.is_active %}
-                                    <span class="badge bg-light text-success border border-success px-2 py-1"><i class="fas fa-check-circle me-1"></i>Activo</span>
-                                {% else %}
-                                    <span class="badge bg-light text-danger border border-danger px-2 py-1"><i class="fas fa-ban me-1"></i>Suspendido</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-end pe-4">
-                                <button type="button" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalPermisos{{ u.id }}">
-                                    <i class="fas fa-user-edit me-1"></i> Modificar Rol
-                                </button>
-                            </td>
-                        </tr>
+    <!-- Filtros -->
+    <div class="glass-card p-4 mb-4">
+        <form method="GET" class="row g-3 align-items-center">
+            <div class="col-md-5">
+                <input type="text" name="buscar_usuario" class="form-control rounded-pill" placeholder="Buscar por usuario o nombre..." value="{{ buscar_usuario }}">
+            </div>
+            <div class="col-md-4">
+                <select name="filtro_rol" class="form-select rounded-pill">
+                    <option value="">Todos los Roles</option>
+                    <option value="is_superuser" {% if filtro_rol == 'is_superuser' %}selected{% endif %}>Administradores</option>
+                    <option value="is_agente" {% if filtro_rol == 'is_agente' %}selected{% endif %}>Agentes Técnicos</option>
+                    <option value="is_cliente" {% if filtro_rol == 'is_cliente' %}selected{% endif %}>Clientes</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary rounded-pill w-100 shadow-sm"><i class="fas fa-filter me-1"></i> Aplicar Filtros</button>
+            </div>
+        </form>
+    </div>
 
-                        <div class="modal fade" id="modalPermisos{{ u.id }}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header bg-light">
-                                        <h5 class="modal-title fw-bold"><i class="fas fa-user-shield text-primary me-2"></i>Editar Accesos: {{ u.username }}</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <form method="POST" action="{% url 'actualizar_rol_usuario' u.id %}">
-                                        {% csrf_token %}
-                                        <div class="modal-body p-4">
-                                            <div class="mb-4">
-                                                <label class="form-label fw-bold text-secondary">Seleccione el Nivel de Acceso:</label>
-                                                
-                                                <div class="form-check p-3 rounded border mb-2 {% if u.is_superuser %}bg-light border-danger{% endif %}">
-                                                    <input class="form-check-input ms-1" type="radio" name="nuevo_rol" id="rolAdmin{{ u.id }}" value="superuser" {% if u.is_superuser %}checked{% endif %}>
-                                                    <label class="form-check-label fw-bold text-danger ms-2" for="rolAdmin{{ u.id }}">
-                                                        <i class="fas fa-crown me-1"></i> Administrador / Superusuario
-                                                    </label>
-                                                    <div class="small text-muted ms-4">Control total del sistema, configuración global y eliminación de registros.</div>
-                                                </div>
-
-                                                <div class="form-check p-3 rounded border mb-2 {% if u.agentes and not u.is_superuser %}bg-light border-primary{% endif %}">
-                                                    <input class="form-check-input ms-1" type="radio" name="nuevo_rol" id="rolAgente{{ u.id }}" value="agente" {% if u.agentes and not u.is_superuser %}checked{% endif %}>
-                                                    <label class="form-check-label fw-bold text-primary ms-2" for="rolAgente{{ u.id }}">
-                                                        <i class="fas fa-user-cog me-1"></i> Agente Técnico / Resolutor
-                                                    </label>
-                                                    <div class="small text-muted ms-4">Acceso a mesas de Triage, resolución de tickets asignados y visualización de estadísticas.</div>
-                                                </div>
-
-                                                <div class="form-check p-3 rounded border mb-2 {% if not u.agentes and not u.is_superuser %}bg-light border-success{% endif %}">
-                                                    <input class="form-check-input ms-1" type="radio" name="nuevo_rol" id="rolCliente{{ u.id }}" value="cliente" {% if not u.agentes and not u.is_superuser %}checked{% endif %}>
-                                                    <label class="form-check-label fw-bold text-success ms-2" for="rolCliente{{ u.id }}">
-                                                        <i class="fas fa-user me-1"></i> Cliente Final
-                                                    </label>
-                                                    <div class="small text-muted ms-4">Acceso limitado única y exclusivamente a crear requerimientos y consultar sus propios tickets.</div>
-                                                </div>
-                                            </div>
-
-                                            <div class="mb-2">
-                                                <label class="form-label fw-bold text-secondary">Estado de la cuenta:</label>
-                                                <div class="form-check form-switch p-3 rounded border bg-light">
-                                                    <input class="form-check-input ms-1" type="checkbox" name="is_active" id="statusActive{{ u.id }}" {% if u.is_active %}checked{% endif %}>
-                                                    <label class="form-check-label fw-bold text-dark ms-3" for="statusActive{{ u.id }}">Permitir el acceso al sistema</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer bg-light">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                                            <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i> Guardar Cambios</button>
-                                        </div>
-                                    </form>
+    <!-- Tabla -->
+    <div class="glass-card p-0 overflow-hidden mb-4">
+        <div class="table-responsive">
+            <table class="table table-modern align-middle mb-0">
+                <thead class="text-muted small text-uppercase bg-light">
+                    <tr><th class="ps-4">Usuario</th><th>Nombre Completo</th><th>Rol</th><th>Estado</th><th class="text-end pe-4">Acciones</th></tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-secondary">{{ u.username }}</td>
+                        <td>{{ u.get_full_name|default:"---" }}</td>
+                        <td>
+                            {% if u.is_superuser %}<span class="badge bg-danger rounded-pill px-3">Admin</span>
+                            {% elif u.agente_set.exists %}<span class="badge bg-primary rounded-pill px-3">Agente</span>
+                            {% else %}<span class="badge bg-success rounded-pill px-3">Cliente</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if u.is_active %}<span class="text-success small"><i class="fas fa-check-circle me-1"></i>Activo</span>
+                            {% else %}<span class="text-danger small"><i class="fas fa-ban me-1"></i>Suspendido</span>{% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-dark rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalPermisos{{ u.id }}">Modificar</button>
+                        </td>
+                    </tr>
+                    <!-- Modal Permisos (simplificado visualmente) -->
+                    <div class="modal fade" id="modalPermisos{{ u.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow-lg rounded-4">
+                                <div class="modal-header bg-primary text-white border-0">
+                                    <h5 class="modal-title">Accesos: {{ u.username }}</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                 </div>
+                                <form method="POST" action="{% url 'actualizar_rol_usuario' u.id %}">
+                                    {% csrf_token %}
+                                    <div class="modal-body p-4">
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Nivel de Acceso:</label>
+                                            <div class="d-grid gap-2">
+                                                <input type="radio" class="btn-check" name="nuevo_rol" id="admin{{ u.id }}" value="superuser" {% if u.is_superuser %}checked{% endif %}>
+                                                <label class="btn btn-outline-danger rounded-pill" for="admin{{ u.id }}">Superusuario</label>
+                                                <input type="radio" class="btn-check" name="nuevo_rol" id="agente{{ u.id }}" value="agente" {% if u.agentes and not u.is_superuser %}checked{% endif %}>
+                                                <label class="btn btn-outline-primary rounded-pill" for="agente{{ u.id }}">Agente Técnico</label>
+                                                <input type="radio" class="btn-check" name="nuevo_rol" id="cliente{{ u.id }}" value="cliente" {% if not u.agentes and not u.is_superuser %}checked{% endif %}>
+                                                <label class="btn btn-outline-success rounded-pill" for="cliente{{ u.id }}">Cliente</label>
+                                            </div>
+                                        </div>
+                                        <div class="form-check form-switch p-3 bg-light rounded-pill">
+                                            <input class="form-check-input ms-2" type="checkbox" name="is_active" id="status{{ u.id }}" {% if u.is_active %}checked{% endif %}>
+                                            <label class="form-check-label ms-3 fw-bold" for="status{{ u.id }}">Cuenta Activa</label>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-0 justify-content-center">
+                                        <button type="submit" class="btn btn-success rounded-pill px-4">Guardar Cambios</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">
-                                <i class="fas fa-info-circle me-1"></i> No se encontraron usuarios que coincidan con los criterios de búsqueda.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        
-        {% if usuarios.has_other_pages %}
-        <div class="card-footer bg-white border-top py-3">
-            <nav aria-label="Navegación de páginas">
-                <ul class="pagination justify-content-center mb-0">
-                    {% if usuarios.has_previous %}
-                        <li class="page-item"><a class="page-line btn btn-sm btn-outline-secondary me-1" href="?page={{ usuarios.previous_page_number }}&buscar_usuario={{ buscar_usuario }}&filtro_rol={{ filtro_rol }}">Anterior</a></li>
-                    {% endif %}
-                    
-                    <li class="page-item disabled"><span class="btn btn-sm btn-light text-dark fw-bold">Página {{ usuarios.number }} de {{ usuarios.paginator.num_pages }}</span></li>
-                    
-                    {% if usuarios.has_next %}
-                        <li class="page-item"><a class="page-line btn btn-sm btn-outline-secondary ms-1" href="?page={{ usuarios.next_page_number }}&buscar_usuario={{ buscar_usuario }}&filtro_rol={{ filtro_rol }}">Siguiente</a></li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}

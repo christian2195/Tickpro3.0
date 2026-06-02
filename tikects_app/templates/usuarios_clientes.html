@@ -1,111 +1,72 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Clientes | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <!-- Encabezado -->
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+    .table-modern { border-collapse: separate; border-spacing: 0 10px; }
+    .table-modern tbody tr { background: white; border-radius: 12px; }
+    .table-modern tbody td { padding: 15px; border: none; }
+</style>
+
+<div class="container-fluid animate__animated animate__fadeIn">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-primary fw-bold">
-            <i class="fas fa-users me-2"></i> Gestión de Clientes EMVEPRO
-        </h2>
-        <a href="{% url 'crear_cliente' %}" class="btn btn-success shadow-sm">
-            <i class="fas fa-user-plus me-2"></i> Nuevo Cliente
+        <h2 class="fw-bold text-dark"><i class="fas fa-users me-2 text-primary"></i> Gestión de Clientes</h2>
+        <a href="{% url 'crear_cliente' %}" class="btn btn-success rounded-pill px-4 shadow-sm">
+            <i class="fas fa-user-plus me-1"></i> Nuevo Cliente
         </a>
     </div>
 
-    <!-- Mensajes -->
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
-                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} me-2"></i>
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
+            <div class="alert alert-{{ message.tags }} border-0 rounded-3 shadow-sm mb-4">{{ message }}</div>
         {% endfor %}
     {% endif %}
 
-    <!-- Tabla -->
-    <div class="card shadow-sm border-0">
+    <div class="glass-card p-4">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light text-uppercase text-muted small">
-                    <tr>
-                        <th class="ps-4">#</th>
-                        <th>Nombre Completo</th>
-                        <th>Nombre de Usuario</th>
-                        <th>Correo Electrónico</th>
-                        <th>Gerencia</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
+            <table class="table table-modern align-middle" id="clientesTable">
+                <thead class="text-muted small text-uppercase">
+                    <tr><th>#</th><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Gerencia</th><th>Acciones</th></tr>
                 </thead>
                 <tbody>
-                    <!-- Filtro dictsort aplicado aquí para ordenar por nombre -->
                     {% for cliente in page_obj|dictsort:"nombre" %}
                     <tr>
-                        <td class="ps-4 text-muted">{{ forloop.counter }}</td>
+                        <td>{{ forloop.counter }}</td>
+                        <td><strong class="text-dark">{{ cliente.nombre|upper }}</strong></td>
+                        <td><span class="badge rounded-pill bg-light text-dark border">{{ cliente.usuario.username|default:"N/A" }}</span></td>
+                        <td class="text-muted small">{{ cliente.correo|default:"Sin correo" }}</td>
+                        <td><span class="badge rounded-pill bg-info bg-opacity-10 text-info px-3">{{ cliente.gerencia.nombre|default:"Sin asignar" }}</span></td>
                         <td>
-                            <div class="fw-bold">{{ cliente.nombre|upper }}</div>
-                        </td>
-                        <td>
-                            <span class="badge bg-light text-dark border">
-                                {{ cliente.usuario.username|default:"N/A" }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if cliente.correo %}
-                                <a href="mailto:{{ cliente.correo }}" class="text-decoration-none">{{ cliente.correo }}</a>
-                            {% else %}
-                                <span class="text-muted fst-italic small">Sin correo</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <span class="badge bg-info bg-opacity-10 text-info fw-bold">
-                                {{ cliente.gerencia.nombre|default:"Sin asignar" }}
-                            </span>
-                        </td>
-                        <td class="text-center">
                             <div class="btn-group">
-                                <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn-outline-warning btn-sm" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <button type="button" class="btn btn-outline-danger btn-sm" 
-                                        onclick="confirmarEliminacion({{ cliente.id }}, '{{ cliente.nombre }}')" title="Eliminar">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
+                                <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn-sm btn-outline-warning rounded-pill px-3 me-2">Editar</a>
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" 
+                                        onclick="confirmarEliminacion({{ cliente.id }}, '{{ cliente.nombre }}')">Eliminar</button>
                             </div>
                         </td>
                     </tr>
                     {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">
-                            No se encontraron clientes registrados.
-                        </td>
-                    </tr>
+                    <tr><td colspan="6" class="text-center py-4 text-muted">No hay clientes registrados.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-
-    <!-- Paginación -->
-    <nav class="mt-4">
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
-            {% endif %}
-            <li class="page-item active"><span class="page-link shadow-sm">{{ page_obj.number }}</span></li>
-            {% if page_obj.has_next %}
-                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
-            {% endif %}
-        </ul>
-    </nav>
 </div>
 
-<!-- Formulario para eliminación -->
 <form id="deleteForm" method="post" style="display: none;">{% csrf_token %}</form>
 
 <script>
     function confirmarEliminacion(id, nombre) {
-        if(confirm(`¿Estás seguro de eliminar al cliente "${nombre}"? Esta acción no se puede deshacer.`)) {
+        if(confirm('¿Eliminar al cliente "' + nombre + '"? Esta acción no se puede deshacer.')) {
             var form = document.getElementById('deleteForm');
             form.action = '{% url "eliminar_cliente" 0 %}'.replace('0', id);
             form.submit();

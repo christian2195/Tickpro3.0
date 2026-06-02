@@ -1,67 +1,72 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Agente | Tickpro 3.0{% endblock %}
 
 {% block content %}
-    <div class="container mt-5">
-        <!-- Título -->
-        <h1 class="text-center text-primary mb-4">
-            <i class="fas fa-user-plus me-2"></i> Crear Agente
-        </h1>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+</style>
 
-        <!-- Formulario de registro -->
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <form action="" method="POST" class="shadow p-4 rounded bg-light">
+<div class="container-fluid animate__animated animate__fadeIn">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-user-plus me-2 text-primary"></i> Nuevo Agente</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'soporte:dashboard' %}" class="text-decoration-none">Inicio</a></li>
+                <li class="breadcrumb-item active text-primary fw-bold">Crear Agente</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="glass-card p-4">
+                <h5 class="fw-bold mb-4 text-center"><i class="fas fa-user-shield me-2 text-primary"></i> Información del Personal</h5>
+                
+                <form method="POST" class="needs-validation" novalidate>
                     {% csrf_token %}
                     
-                    <!-- Campo Nombre -->
-                    <div class="mb-3">
-                        <label for="nombre" class="form-label">Nombre:</label>
-                        <input type="text" name="nombre" id="nombre" class="form-control" placeholder="Ingresa el nombre del agente" required>
-                    </div>
-                    
-                    <!-- Campo Apellido -->
-                    <div class="mb-3">
-                        <label for="apellido" class="form-label">Apellido:</label>
-                        <input type="text" name="apellido" id="apellido" class="form-control" placeholder="Ingresa el apellido del agente" required>
-                    </div>
-
-                    <!-- Campo Nombre de Usuario -->
-                    <div class="mb-3">
-                        <label for="nombre_usuario" class="form-label">Nombre de Usuario:</label>
-                        <input type="text" name="nombre_usuario" id="nombre_usuario" class="form-control" placeholder="Ejemplo: prodriguez" required>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Nombre</label>
+                            <input type="text" name="nombre" class="form-control rounded-pill" placeholder="Nombre" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Apellido</label>
+                            <input type="text" name="apellido" class="form-control rounded-pill" placeholder="Apellido" required>
+                        </div>
                     </div>
 
-                    <!-- Campo Email -->
                     <div class="mb-3">
-                        <label for="email" class="form-label">Email:</label>
-                        <input type="email" name="email" id="email" class="form-control" placeholder="correo@ejemplo.com" required>
+                        <label class="form-label small fw-bold">Nombre de Usuario</label>
+                        <input type="text" name="nombre_usuario" class="form-control rounded-pill" placeholder="Ej: cgonzalez" required>
                     </div>
 
-                    <!-- Campo Contraseña -->
                     <div class="mb-3">
-                        <label for="password" class="form-label">Contraseña:</label>
-                        <input type="password" name="password" id="password" class="form-control" placeholder="Crea una contraseña segura" required>
+                        <label class="form-label small fw-bold">Correo Electrónico</label>
+                        <input type="email" name="email" class="form-control rounded-pill" placeholder="usuario@emvepro.gob.ve" required>
                     </div>
 
-                    <!-- Campo Teléfono -->
                     <div class="mb-3">
-                        <label for="telefono" class="form-label">Teléfono:</label>
-                        <input type="tel" name="telefono" id="telefono" class="form-control" placeholder="Ingresa el número de teléfono">
+                        <label class="form-label small fw-bold">Contraseña</label>
+                        <input type="password" name="password" class="form-control rounded-pill" placeholder="••••••••" required>
                     </div>
 
-                    <!-- Campo Rol
-                    <div class="mb-3">
-                        <label for="rol" class="form-label">Rol:</label>
-                        <select name="rol" id="rol" class="form-select">
-                            <option value="agente">Agente</option>
-                            <option value="supervisor">Supervisor</option>
-                            <option value="administrador">Administrador</option>
-                        </select>
-                    </div> -->
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Teléfono</label>
+                        <input type="tel" name="telefono" class="form-control rounded-pill" placeholder="+58 000 0000000">
+                    </div>
 
-                    <!-- Botón Enviar -->
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary btn-lg">
+                    <div class="text-center pt-2">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
                             <i class="fas fa-check-circle me-2"></i> Registrar Agente
                         </button>
                     </div>
@@ -69,4 +74,5 @@
             </div>
         </div>
     </div>
+</div>
 {% endblock %}

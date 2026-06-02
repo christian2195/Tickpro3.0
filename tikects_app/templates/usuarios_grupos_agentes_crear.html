@@ -1,34 +1,73 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Grupo | Tickpro 3.0{% endblock %}
 
 {% block content %}
-    <div class="container mt-5">
-        <!-- Encabezado -->
-        <h1 class="text-center text-success mb-4">
-            <i class="fas fa-user-plus me-2"></i> Crear Grupo
-        </h1>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+</style>
 
-        <!-- Formulario -->
-        <form method="post" class="shadow p-4 rounded bg-light">
-            {% csrf_token %}
-            
-            <!-- Campo Nombre del Grupo -->
-            <div class="mb-3">
-                <label for="nombre_grupo" class="form-label">Nombre del Grupo:</label>
-                <input type="text" name="nombre_grupo" id="nombre_grupo" class="form-control" placeholder="Introduce el nombre del grupo" required>
-            </div>
-            
-            <!-- Campo Descripción -->
-            <div class="mb-3">
-                <label for="descripcion_grupo" class="form-label">Descripción:</label>
-                <textarea name="descripcion_grupo" id="descripcion_grupo" class="form-control" rows="3" placeholder="Introduce una descripción del grupo"></textarea>
-            </div>
-            
-            <!-- Botón Crear -->
-            <div class="text-center">
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-check-circle me-2"></i> Crear Grupo
-                </button>
-            </div>
-        </form>
+<div class="container-fluid animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="fas fa-layer-group me-2 text-success"></i> Crear Grupo</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'configuracion' %}" class="text-decoration-none">Configuración</a></li>
+                <li class="breadcrumb-item active text-success fw-bold">Crear Grupo</li>
+            </ol>
+        </nav>
     </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="glass-card p-4">
+                <h5 class="fw-bold mb-4 text-center"><i class="fas fa-plus-circle me-2 text-success"></i> Información del Nuevo Grupo</h5>
+                
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre del Grupo <span class="text-danger">*</span></label>
+                        <input type="text" name="nombre_grupo" class="form-control rounded-pill" placeholder="Ej: Clientes VIP" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Descripción</label>
+                        <textarea name="descripcion_grupo" class="form-control rounded-3" rows="3" placeholder="Detalles sobre este grupo..."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{% url 'usuarios_clientes_grupos' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-success rounded-pill px-4 shadow-sm">
+                            <i class="fas fa-save me-2"></i> Crear Grupo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+        var forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms).forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
 {% endblock %}
