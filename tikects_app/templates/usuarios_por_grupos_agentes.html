@@ -1,45 +1,50 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <div class="container mt-5">
-        <!-- Título principal -->
-        <h1 class="text-center mb-4 text-primary">
-            <i class="fas fa-users-cog me-2"></i> Usuarios por Grupos
-        </h1>
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-primary">
+                <i class="fas fa-users-cog me-2"></i> Usuarios por Grupo
+            </h2>
+            <a href="{% url 'usuarios_grupos_agentes_agregar' %}" class="btn btn-primary shadow-sm">
+                <i class="fas fa-user-plus me-2"></i> Agregar Usuario a Grupo
+            </a>
+        </div>
 
-        <!-- Botón Agregar Usuario a Grupo -->
-        <a href="{% url 'usuarios_grupos_agentes_agregar' %}" class="btn btn-sm btn-light">
-            <i class="fas fa-user-plus me-2"></i> Agregar Usuario a Grupo
-        </a>
-
-        <!-- Lista de Usuarios por Grupos -->
         {% for grupo in grupos %}
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <div class="card mb-4 shadow-sm border-0">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center py-3">
                     <h5 class="mb-0">
-                        <i class="fas fa-users me-2"></i> {{ grupo.nombre }}
+                        <i class="fas fa-layer-group me-2"></i> {{ grupo.nombre }}
                     </h5>
+                    <span class="badge bg-white text-success rounded-pill px-3">
+                        {{ grupo.agentes_por_grupos_set.count }} miembros
+                    </span>
                 </div>
-                <div class="card-body bg-light">
+                
+                <div class="card-body p-0">
                     {% if grupo.agentes_por_grupos_set.all %}
-                    <table class="table table-hover">
-                        <thead class="table-success">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Nombre del Usuario</th>
-                                <th scope="col">Correo Electrónico</th>
-                                <th scope="col">Acciones</th>
+                                <th class="ps-4">#</th>
+                                <th>Nombre de Usuario</th>
+                                <th>Correo Electrónico</th>
+                                <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for grupo_agente in grupo.agentes_por_grupos_set.all %}
                             <tr>
-                                <th scope="row">{{ forloop.counter }}</th>
-                                <td>{{ grupo_agente.agente.usuario.username }}</td>
-                                <td>{{ grupo_agente.agente.email }}</td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#confirmModal" data-grupo-agente-id="{{ grupo_agente.id }}">
-                                        <i class="fas fa-trash-alt"></i> Eliminar
+                                <td class="ps-4 text-muted">{{ forloop.counter }}</td>
+                                <td><strong>{{ grupo_agente.agente.usuario.username }}</strong></td>
+                                <td>{{ grupo_agente.agente.usuario.email|default:"No registrado" }}</td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-outline-danger btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#confirmModal" 
+                                            data-grupo-agente-id="{{ grupo_agente.id }}">
+                                        <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -47,31 +52,34 @@
                         </tbody>
                     </table>
                     {% else %}
-                    <p class="text-center text-muted">No hay usuarios en este grupo.</p>
+                    <div class="p-4 text-center text-muted">
+                        <i class="fas fa-info-circle me-2"></i> No hay usuarios asignados a este grupo.
+                    </div>
                     {% endif %}
                 </div>
             </div>
-            {% empty %}
-            <p class="text-center text-muted">No hay grupos disponibles.</p>
+        {% empty %}
+            <div class="alert alert-warning text-center">
+                <i class="fas fa-exclamation-triangle me-2"></i> No hay grupos definidos en el sistema.
+            </div>
         {% endfor %}
     </div>
 
-    <!-- Modal de confirmación -->
-    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="confirmModalLabel">Confirmar eliminación</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    ¿Estás seguro de que deseas eliminar este agente del grupo?
+                    ¿Estás seguro de que deseas retirar a este agente del grupo?
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <form id="deleteForm" method="post" class="d-inline">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                        <button type="submit" class="btn btn-danger">Confirmar retiro</button>
                     </form>
                 </div>
             </div>
@@ -79,15 +87,13 @@
     </div>
 
     <script>
-        // Manejar el evento de mostrar el modal
         var confirmModal = document.getElementById('confirmModal');
         confirmModal.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget; // Botón que activó el modal
-            var grupoAgenteId = button.getAttribute('data-grupo-agente-id'); // Extraer información del atributo data-grupo-agente-id
-
-            // Actualizar la acción del formulario con el ID del grupo_agente
+            var button = event.relatedTarget;
+            var id = button.getAttribute('data-grupo-agente-id');
             var deleteForm = document.getElementById('deleteForm');
-            deleteForm.action = '{% url "eliminar_agente_de_grupo" 0 %}'.replace('0', grupoAgenteId);
+            // Asegúrate de que el nombre 'eliminar_agente_de_grupo' coincida con tu urls.py
+            deleteForm.action = '{% url "eliminar_agente_de_grupo" 0 %}'.replace('0', id);
         });
     </script>
 {% endblock %}

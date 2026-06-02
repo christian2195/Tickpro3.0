@@ -1,5 +1,7 @@
+from tikects_app.decoradores import solo_clientes_permitido
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
+from tikects_app.models import Agentes, Cliente, Tickets_Servicios, Tickets_Colas, Gerencia
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q, Prefetch, Count, F, Avg
@@ -13,6 +15,8 @@ from django.conf import settings
 import openpyxl
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from email.message import EmailMessage
+import smtplib
 import pandas as pd
 from datetime import datetime
 import os
@@ -20,7 +24,7 @@ import io
 import itertools
 import operator
 import unicodedata
-
+import ssl
 # ============================================
 # MODELOS
 # ============================================
@@ -154,22 +158,45 @@ def crear_tikects_clientes(request):
 
 @login_required
 def crear_tikects(request):
+    # Verificamos si el usuario actual es un agente (o superusuario)
+    es_agente_o_admin = request.user.is_superuser or Agentes.objects.filter(usuario=request.user).exists()
+
     if request.method == 'GET':
         servicios = Tickets_Servicios.objects.all()
         colas = Tickets_Colas.objects.all()
         gerencias = Gerencia.objects.all()
+        
+        # Obtenemos la lista de clientes para enviarla al template
+        clientes = Cliente.objects.select_related('usuario').all()
+
         return render(request, 'tikects_crear.html', {
             'servicios': servicios,
             'colas': colas,
-            'gerencias': gerencias
+            'gerencias': gerencias,
+            'clientes': clientes,
+            'es_agente': es_agente_o_admin # Pasamos esta bandera al HTML
         })
+        
     elif request.method == 'POST':
         titulo = request.POST.get('titulo', '').strip()
         descripcion = request.POST.get('descripcion', '').strip()
         cola_id = request.POST.get('cola')
         servicio_id = request.POST.get('servicio')
-        gerencia_id = request.POST.get('gerencia') # <--- CAPTURAMOS EL ID
-        usuario = request.user
+        gerencia_id = request.POST.get('gerencia') 
+        
+        # CAPTURAMOS EL CLIENTE AFECTADO (Si el agente lo seleccionó)
+        cliente_id = request.POST.get('cliente_id')
+        
+        # Por defecto, el ticket le pertenece a quien tiene la sesión iniciada
+        usuario = request.user 
+
+        # Si se seleccionó a otro cliente, y quien crea el ticket tiene permisos (Agente/Admin)
+        if cliente_id and es_agente_o_admin:
+            try:
+                usuario = User.objects.get(id=cliente_id)
+            except User.DoesNotExist:
+                messages.error(request, "El usuario seleccionado no existe.")
+                return redirect('crear_tikects')
 
         if not all([titulo, descripcion, cola_id, servicio_id, gerencia_id]):
             messages.error(request, "Todos los campos son obligatorios.")
@@ -177,18 +204,10 @@ def crear_tikects(request):
 
         _crear_ticket_base(request, titulo, descripcion, cola_id, servicio_id, usuario, gerencia_id)
         
-        messages.success(request, "Ticket creado exitosamente.")
+        messages.success(request, f"Ticket creado exitosamente para {usuario.first_name} {usuario.last_name}.")
         return redirect('ver_tikects')
         
     return redirect('crear_tikects')
-
-def generar_correo_institucional(first_name, last_name):
-    """Genera correo institucional automáticamente."""
-    nombre = str(first_name).strip().split()[0].lower()
-    apellido = str(last_name).strip().split()[0].lower()
-    nombre = "".join(c for c in unicodedata.normalize('NFD', nombre) if unicodedata.category(c) != 'Mn')
-    apellido = "".join(c for c in unicodedata.normalize('NFD', apellido) if unicodedata.category(c) != 'Mn')
-    return f"{nombre.replace('ñ', 'n')}.{apellido.replace('ñ', 'n')}@emvepro.gob.ve"
 
 # ============================================
 # AUTENTICACIÓN
@@ -278,20 +297,34 @@ def pagina_principal(request):
     })
 
 @login_required
+@solo_clientes_permitido
 def pagina_clientes(request):
     """Página principal para clientes."""
     user = request.user
+    
+    # --- ESCUDO DE SEGURIDAD ---
+    # Si el usuario es Agente, no tiene permiso para entrar al portal de clientes.
+    # Lo redirigimos a la página principal de agentes o al dashboard técnico.
+    if Agentes.objects.filter(usuario=user).exists():
+        return redirect('pagina_principal') 
+    # ---------------------------
+
     total_mis_tickets = 0
     mis_tickets_abiertos = 0
     mis_tickets_cerrados = 0
     ultimos_tickets = []
 
     try:
-        total_mis_tickets = Tickets.objects.filter(usuario=user).count()
-        mis_tickets_abiertos = Tickets.objects.filter(usuario=user).exclude(estado='cerrado').count()
-        mis_tickets_cerrados = Tickets.objects.filter(usuario=user, estado='cerrado').count()
-        ultimos_tickets = Tickets.objects.filter(usuario=user).order_by('-fecha_creacion')[:5]
+        # Optimizamos las consultas: obtenemos el queryset una sola vez
+        mis_tickets = Tickets.objects.filter(usuario=user)
+        
+        total_mis_tickets = mis_tickets.count()
+        mis_tickets_abiertos = mis_tickets.exclude(estado='cerrado').count()
+        mis_tickets_cerrados = mis_tickets.filter(estado='cerrado').count()
+        ultimos_tickets = mis_tickets.order_by('-fecha_creacion')[:5]
+        
     except Exception as e:
+        # En producción, podrías usar un logger en lugar de print
         print(f"Error en dashboard de clientes: {e}")
 
     return render(request, 'pagina_principal_clientes.html', {
@@ -301,7 +334,6 @@ def pagina_clientes(request):
         'ultimos_tickets': ultimos_tickets,
         'now': datetime.now()
     })
-
 # ============================================
 # CONFIGURACIÓN
 # ============================================
@@ -425,138 +457,89 @@ def usuarios_agentes(request):
 @superuser_required
 @login_required
 def usuarios_agentes_crear(request):
-    if request.method == 'POST':
-        nombre = request.POST.get('nombre')
-        apellido = request.POST.get('apellido')
-        username = request.POST.get('nombre_usuario')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-
-        if nombre and apellido and username and email and password:
-            try:
-                try:
-                    user = User.objects.get(username=username)
-                    messages.info(request, f"El usuario {username} ya existe. Se creará solo el perfil de agente.")
-                except User.DoesNotExist:
-                    user = User.objects.create_user(
-                        username=username,
-                        email=email,
-                        password=password,
-                        first_name=nombre,
-                        last_name=apellido
-                    )
-                    messages.success(request, f"Usuario {username} creado exitosamente.")
-                
-                agente, created = Agentes.objects.get_or_create(
-                    usuario=user,
-                    defaults={
-                        'nombre_usuario': username,
-                        'correo': email,
-                    }
-                )
-                
-                if created:
-                    messages.success(request, f"Perfil de agente para {username} creado.")
-                else:
-                    messages.info(request, f"El usuario {username} ya tenía perfil de agente.")
-                
-                return redirect('usuarios_agentes')
-                
-            except Exception as e:
-                messages.error(request, f"Error: {str(e)}")
-                return redirect('usuarios_agentes_crear')
-                
-    return render(request, 'usuarios_agentes_crear.html')
+    if request.method == 'GET':
+        usuarios = User.objects.exclude(agentes__isnull=False).order_by('username')
+        return render(request, 'usuarios_agentes_crear.html', {'usuarios_disponibles': usuarios})
+    elif request.method == 'POST':
+        usuario_id = request.POST.get('usuario_id')
+        if usuario_id:
+            user = get_object_or_404(User, id=usuario_id)
+        else:
+            nombre = request.POST.get('nombre')
+            apellido = request.POST.get('apellido')
+            username = request.POST.get('nombre_usuario')
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+            user = User.objects.create_user(username=username, email=email, password=password, first_name=nombre, last_name=apellido)
+            user.is_staff = True
+            user.save()
+        agente, created = Agentes.objects.get_or_create(usuario=user, defaults={'nombre_usuario': user.username, 'correo': user.email})
+        return redirect('usuarios_agentes')
 
 @superuser_required
 @login_required
 def editar_agente(request, agente_id):
     agente = get_object_or_404(Agentes, id=agente_id)
     usuario = agente.usuario
-
     if request.method == 'POST':
-        nombre = request.POST.get('nombre', '').strip()
-        apellido = request.POST.get('apellido', '').strip()
-        nombre_usuario = request.POST.get('nombre_usuario', '').strip()
-        email = request.POST.get('email', '').strip()
-        nueva_password = request.POST.get('password', '').strip()
-
-        if not nombre or not apellido or not nombre_usuario or not email:
-            messages.error(request, "Todos los campos son obligatorios.")
-            return render(request, 'agentes_editar.html', {'agente': agente})
-
-        try:
-            usuario.username = nombre_usuario
-            usuario.first_name = nombre
-            usuario.last_name = apellido
-            usuario.email = email
-            if nueva_password:
-                usuario.set_password(nueva_password)
-            usuario.save()
-
-            agente.nombre_usuario = nombre_usuario
-            agente.correo = email
-            agente.save()
-
-            messages.success(request, f"Agente '{nombre_usuario}' actualizado exitosamente.")
-            return redirect('usuarios_agentes')
-            
-        except Exception as e:
-            messages.error(request, f"Error al actualizar el agente: {str(e)}")
-            return render(request, 'agentes_editar.html', {'agente': agente})
-
-    return render(request, 'agentes_editar.html', {
-        'agente': agente,
-        'nombre': usuario.first_name,
-        'apellido': usuario.last_name,
-        'nombre_usuario': usuario.username,
-        'email': usuario.email,
-    })
-
-@login_required
-def ver_agentes(request):
-    agentes = Agentes.objects.all().order_by('nombre_usuario')
-    return render(request, 'usuarios_agentes.html', {'agentes': agentes})
+        usuario.username = request.POST.get('nombre_usuario')
+        usuario.first_name = request.POST.get('nombre')
+        usuario.last_name = request.POST.get('apellido')
+        usuario.email = request.POST.get('email')
+        if request.POST.get('password'): usuario.set_password(request.POST.get('password'))
+        usuario.save()
+        agente.nombre_usuario = usuario.username
+        agente.correo = usuario.email
+        agente.save()
+        return redirect('usuarios_agentes')
+    return render(request, 'agentes_editar.html', {'agente': agente})
 
 @superuser_required
 @login_required
 def eliminar_agente(request, agente_id):
     agent = get_object_or_404(Agentes, id=agente_id)
     if request.method == 'POST':
-        try:
-            nombre_usuario = agent.nombre_usuario
-            agent.delete()
-            messages.success(request, f"Agente '{nombre_usuario}' eliminado exitosamente.")
-        except Exception as e:
-            messages.error(request, f"Error al eliminar el agente: {str(e)}")
+        agent.delete()
     return redirect('usuarios_agentes')
 
-@superuser_required
 @login_required
 def usuarios_grupos_agentes(request):
-    grupos_agentes = Grupos_Agentes.objects.all()
-    return render(request, 'usuarios_grupos_agentes.html', {'grupos_agentes': grupos_agentes})
+    return render(request, 'usuarios_grupos_agentes.html', {'grupos_agentes': Grupos_Agentes.objects.all()})
 
-@superuser_required
 @login_required
 def usuarios_grupos_agentes_crear(request):
     if request.method == 'POST':
-        nombre = request.POST.get('nombre_grupo')
-        descripcion = request.POST.get('descripcion_grupo')
-        if nombre:
-            Grupos_Agentes.objects.create(nombre=nombre, descripcion=descripcion)
-            return redirect('usuarios_grupos_agentes')
+        Grupos_Agentes.objects.create(nombre=request.POST.get('nombre_grupo'), descripcion=request.POST.get('descripcion_grupo'))
+        return redirect('usuarios_grupos_agentes')
     return render(request, 'usuarios_grupos_agentes_crear.html')
 
-@superuser_required
 @login_required
 def usuariops_grupo_agentes_eliminar(request, grupo_id):
-    grupo = get_object_or_404(Grupos_Agentes, id=grupo_id)
     if request.method == 'POST':
-        grupo.delete()
+        get_object_or_404(Grupos_Agentes, id=grupo_id).delete()
     return redirect('usuarios_grupos_agentes')
 
-@superuser_required
+@login_required
+def usuarios_por_grupos_agentes(request):
+    grupos = Grupos_Agentes.objects.prefetch_related(Prefetch('agentes_por_grupos_set', queryset=Agentes_Por_Grupos.objects.select_related('agente'))).all()
+    return render(request, 'usuarios_por_grupos_agentes.html', {'grupos': grupos})
+
+@login_required
+def usuarios_grupos_agentes_agregar(request):
+    if request.method == 'POST':
+        agente_id = request.POST.get('agente')
+        grupo_id = request.POST.get('grupo')
+        if agente_id and grupo_id:
+            Agentes_Por_Grupos.objects.get_or_create(agente_id=agente_id, grupo_id=grupo_id)
+            return redirect('usuarios_por_grupos_agentes')
+    return render(request, 'usuarios_grupos_agentes_agregar.html', {'agentes': Agentes.objects.all(), 'grupos': Grupos_Agentes.objects.all()})
+
+@login_required
+def eliminar_agente_de_grupo(request, grupo_agente_id):
+    if request.method == 'POST':
+        get_object_or_404(Agentes_Por_Grupos, id=grupo_agente_id).delete()
+    return redirect('usuarios_por_grupos_agentes')
+
 @login_required
 def editar_grupo(request, grupo_id):
     grupo = get_object_or_404(Grupos_Agentes, id=grupo_id)
@@ -564,50 +547,15 @@ def editar_grupo(request, grupo_id):
         grupo.nombre = request.POST.get('nombre')
         grupo.descripcion = request.POST.get('descripcion')
         grupo.save()
+        Agentes_Por_Grupos.objects.filter(grupo=grupo).delete()
+        for agente_id in request.POST.getlist('agentes'):
+            Agentes_Por_Grupos.objects.create(grupo=grupo, agente_id=agente_id)
         return redirect('usuarios_grupos_agentes')
-    return render(request, 'grupos_editar.html', {'grupo': grupo})
-
-@superuser_required
-@login_required
-def usuarios_por_grupos_agentes(request):
-    grupos = Grupos_Agentes.objects.prefetch_related(
-        Prefetch('agentes_por_grupos_set', queryset=Agentes_Por_Grupos.objects.select_related('agente'))
-    ).all()
-    return render(request, 'usuarios_por_grupos_agentes.html', {'grupos': grupos})
-
-@superuser_required
-@login_required
-def usuarios_grupos_agentes_agregar(request):
-    if request.method == 'GET':
-        agentes = Agentes.objects.all()
-        grupos = Grupos_Agentes.objects.all()
-        return render(request, 'usuarios_grupos_agentes_agregar.html', {
-            'agentes': agentes,
-            'grupos': grupos
-        })
-    else:
-        agente_id = request.POST.get('agente')
-        grupo_id = request.POST.get('grupo')
-        if agente_id and grupo_id:
-            agente = get_object_or_404(Agentes, id=agente_id)
-            grupo = get_object_or_404(Grupos_Agentes, id=grupo_id)
-            if Agentes_Por_Grupos.objects.filter(agente=agente, grupo=grupo).exists():
-                return render(request, 'usuarios_grupos_agentes_agregar.html', {
-                    'agentes': Agentes.objects.all(),
-                    'grupos': Grupos_Agentes.objects.all(),
-                    'error': 'El agente ya pertenece a este grupo.'
-                })
-            Agentes_Por_Grupos.objects.create(agente=agente, grupo=grupo)
-            return redirect('usuarios_por_grupos_agentes')
-        return redirect('usuarios_grupos_agentes_agregar')
-
-@superuser_required
-@login_required
-def eliminar_agente_de_grupo(request, grupo_agente_id):
-    grupo_agente = get_object_or_404(Agentes_Por_Grupos, id=grupo_agente_id)
-    if request.method == 'POST':
-        grupo_agente.delete()
-    return redirect('usuarios_por_grupos_agentes')
+    return render(request, 'grupos_editar.html', {
+        'grupo': grupo, 
+        'todos_los_agentes': Agentes.objects.all(), 
+        'agentes_del_grupo': Agentes_Por_Grupos.objects.filter(grupo=grupo).values_list('agente_id', flat=True)
+    })
 
 # ============================================
 # CLIENTES Y GERENCIAS
@@ -912,15 +860,13 @@ def cerrar_tikect(request, tikect_id):
         tikect.cerrado_por_agente = agente_actual
         tikect.save()
         
-        # Notificación por email
+# Notificación por email
         if tikect.usuario and tikect.usuario.email:
-            send_mail(
-                subject=f"Ticket Cerrado: #{tikect.id} - {tikect.titulo}",
-                message=f"Hola {tikect.usuario.first_name},\n\nTu ticket ha sido marcado como CERRADO.\nSolución aplicada: {descripcion_solucion or 'No especificada'}",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[tikect.usuario.email],
-                fail_silently=True,
-            )
+            # EN LUGAR DE send_mail, LLAMAMOS A NUESTRA FUNCIÓN DE LA VISTA LEGADO
+            try:
+                enviar_correo_estado(tikect)
+            except Exception as e:
+                print(f"Error al enviar correo automático: {e}")
 
         messages.success(request, "Ticket cerrado exitosamente.")
         
@@ -988,6 +934,7 @@ def reasignar_tikect(request, tikect_id):
 # ============================================
 
 @login_required
+@solo_clientes_permitido
 def ver_mis_tikects(request):
     # 🚫 Restricción para resolutores
     if request.user.is_superuser or Agentes.objects.filter(usuario=request.user).exists():
@@ -1001,6 +948,7 @@ def ver_mis_tikects(request):
     return render(request, 'tikects_vista_lista_cliente.html', {'page_obj': page_obj})
 
 @login_required
+@solo_clientes_permitido
 def ver_mis_tikects_cerrados(request):
     if request.user.is_superuser or Agentes.objects.filter(usuario=request.user).exists():
         return redirect('pagina_principal')
@@ -1011,6 +959,7 @@ def ver_mis_tikects_cerrados(request):
     return render(request, 'tikects_vista_lista_cliente.html', {'page_obj': page_obj})
 
 @login_required
+@solo_clientes_permitido
 def ver_mis_tikects_abiertos(request):
     if request.user.is_superuser or Agentes.objects.filter(usuario=request.user).exists():
         return redirect('pagina_principal')
@@ -1021,6 +970,7 @@ def ver_mis_tikects_abiertos(request):
     return render(request, 'tikects_vista_lista_cliente.html', {'page_obj': page_obj})
 
 @login_required
+@solo_clientes_permitido
 def crear_tikects_clientes(request):
     if request.method == 'GET':
         servicios = Tickets_Servicios.objects.all()
@@ -1674,3 +1624,75 @@ def actualizar_rol_usuario(request, usuario_id):
         messages.success(request, f"Permisos de '{user_target.username}' actualizados correctamente.")
         
     return redirect('panel_permisos_roles')
+
+# ============================================
+# DISPARADOR DE CORREOS (GLOBAL)
+# ============================================
+def enviar_correo_estado(ticket):
+    # Validación extra: si el ticket no tiene usuario o el usuario no tiene email, salimos inmediatamente
+    if not ticket.usuario or not ticket.usuario.email:
+        print(f"Ticket #{ticket.id}: No tiene usuario o correo asociado. Omitiendo envío.")
+        return
+
+    # 1. Configuración de credenciales (esto está perfecto)
+    smtp_server = settings.EMAIL_HOST
+    smtp_port = settings.EMAIL_PORT
+    sender = settings.EMAIL_HOST_USER
+    password = settings.EMAIL_HOST_PASSWORD
+    recipient = ticket.usuario.email
+
+    # 2. Crear el mensaje
+    msg = EmailMessage()
+    msg['Subject'] = f"EMVEPRO Tickpro - Ticket #{ticket.id}"
+    msg['From'] = sender
+    msg['To'] = recipient
+    msg.set_content(f"Hola {ticket.usuario.first_name}, el estatus de su ticket ha cambiado a: {ticket.estado.upper()}.")
+
+    # 3. Crear un contexto SSL forzando TLS 1.2
+    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2) 
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    
+    try:
+        # Usamos SMTP (sin SSL directo) y luego subimos a STARTTLS
+        with smtplib.SMTP(settings.EMAIL_HOST, 587) as server: # Probemos puerto 587
+            server.starttls(context=context)
+            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            server.send_message(msg)
+        print(f"Correo enviado exitosamente a {recipient}")
+    except Exception as e:
+        print(f"Error SMTP detectado: {e}")
+    
+if hasattr(ssl, '_create_unverified_context'):
+    ssl._create_default_https_context = ssl._create_unverified_context
+
+@agente_or_superuser_required
+def enviar_respuesta_correo(request, tikect_id):
+    tikect = get_object_or_404(Tickets, id=tikect_id)
+    
+    if request.method == 'POST':
+        mensaje_personalizado = request.POST.get('mensaje', '').strip()
+        
+        if mensaje_personalizado:
+            # Reutilizamos la lógica del contexto SSL que creamos antes
+            subject = f"Respuesta de Soporte EMVEPRO - Ticket #{tikect.id}"
+            msg = EmailMessage()
+            msg['Subject'] = subject
+            msg['From'] = settings.DEFAULT_FROM_EMAIL
+            msg['To'] = tikect.usuario.email
+            msg.set_content(mensaje_personalizado)
+            
+            # Usamos el contexto para ignorar el certificado autofirmado
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+            
+            try:
+                with smtplib.SMTP_SSL(settings.EMAIL_HOST, settings.EMAIL_PORT, context=context) as server:
+                    server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+                    server.send_message(msg)
+                messages.success(request, "Respuesta enviada al usuario con éxito.")
+            except Exception as e:
+                messages.error(request, f"Error al enviar: {e}")
+        
+    return redirect('detalle_tikect', tikect_id=tikect.id)

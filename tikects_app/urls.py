@@ -1,7 +1,11 @@
 from django.urls import path, include
 from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
+from tikects_app import vistas_legado
 from tikects_app.views import core, clientes, agentes, admin
+
+# 🔒 IMPORTAMOS EL ESCUDO DE SEGURIDAD
+from tikects_app.decoradores import solo_clientes_permitido
 
 try:
     from tikects_app import vistas_legado as v_viejas
@@ -22,9 +26,10 @@ urlpatterns = [
     path('logout/', core.CerrarSesionView.as_view(), name='cerrar_sesion'),
     path('redireccionar/', core.EnrutadorInicialView.as_view(), name='enrutador_inicial'),
 
-    # 👤 ENTORNO PORTAL DE CLIENTES
+    # 👤 ENTORNO PORTAL DE CLIENTES (Protegido con el decorador)
     path('portal/', include(([
-        path('inicio/', clientes.DashboardClientesView.as_view(), name='dashboard'),
+        # Envolvemos as_view() con el decorador para expulsar agentes
+        path('inicio/', solo_clientes_permitido(clientes.DashboardClientesView.as_view()), name='dashboard'),
     ], 'clientes'))),
 
     # 🛠️ ENTORNO DE SOPORTE / RESOLUTORES (Namespaces)
@@ -38,9 +43,11 @@ urlpatterns = [
     
     # 🔄 ALIAS DE COMPATIBILIDAD CON PLANTILLAS HTML
     path('soporte/main/', agentes.DashboardSoporteView.as_view(), name='pagina_principal'),
-    path('portal/main/', clientes.DashboardClientesView.as_view(), name='pagina_principal_clientes'),
+    
+    # Protegemos también este alias del portal
+    path('portal/main/', solo_clientes_permitido(clientes.DashboardClientesView.as_view()), name='pagina_principal_clientes'),
 
-    # 📊 BOTONES OPERATIVOS
+    # 📊 BOTONES OPERATIVOS (AQUÍ NO VA EL DECORADOR)
     path('configuracion/', admin.PanelConfiguracionView.as_view(), name='configuracion'),
     path('estadisticas/', mapear_vista('tikects_estadisticas'), name='estadisticas'),
     path('tikects/crear_tikects', mapear_vista('crear_tikects'), name='crear_tikects'),
@@ -84,9 +91,15 @@ urlpatterns = [
     path('ver-agentes-genericos/', mapear_vista('ver_agentes_genericos'), name='ver_agentes_genericos'),
     path('usuario/agente_generico/', mapear_vista('agente_generico'), name='agente_generico'),
     path('asignaciones/eliminar/<int:asignacion_id>/', mapear_vista('eliminar_asignacion'), name='eliminar_asignacion'),
+    
+    # ⚠️ VISTA DE PERMISOS: SIN PROTECCIÓN DE CLIENTES (Para que tú puedas entrar)
     path('usuarios/permisos', mapear_vista('panel_permisos_roles'), name='panel_permisos_roles'),
     path('usuarios/permisos/actualizar/<int:usuario_id>/', mapear_vista('actualizar_rol_usuario'), name='actualizar_rol_usuario'),
-
+    
+    path('grupos_agentes/editar/<int:grupo_id>/', vistas_legado.editar_grupo, name='editar_grupo'),
+    path('grupos_agentes/eliminar/<int:grupo_id>/', vistas_legado.usuariops_grupo_agentes_eliminar, name='eliminar_grupo_agentes'),
+    path('grupos_agentes/eliminar_del_grupo/<int:grupo_agente_id>/', vistas_legado.eliminar_agente_de_grupo, name='eliminar_agente_de_grupo'),
+    
     # IMPORTACIÓN Y EXPORTACIÓN MASIVA
     path('registrar-tickets/', mapear_vista('registrar_tickets_excel'), name='registrar_tickets'),
     path('exportar_tikects_excel/', mapear_vista('exportar_tikects_excel'), name='exportar_tikects_excel'),
@@ -114,12 +127,13 @@ urlpatterns = [
     path('agentes/editar/<int:agente_id>/', mapear_vista('editar_agente'), name='editar_agente'),
     path('agentes/eliminar/<int:agente_id>/', mapear_vista('eliminar_agente'), name='eliminar_agente'),
 
-    path('tikects/cliente_ver_mis_tikects/', mapear_vista('ver_mis_tikects'), name='ver_mis_tikects'),
-    path('tikects/mis_abiertos/', mapear_vista('ver_mis_tikects_abiertos'), name='ver_mis_tikects_abiertos'),
-    path('tikects/mis_cerrados/', mapear_vista('ver_mis_tikects_cerrados'), name='ver_mis_tikects_cerrados'),
-    path('tikects/crear_cliente_tikects/', mapear_vista('crear_tikects_clientes'), name='crear_tikects_clientes'),
+    # VISTAS DE CLIENTES PROTEGIDAS DIRECTAMENTE EN EL ENRUTADOR
+    path('tikects/cliente_ver_mis_tikects/', solo_clientes_permitido(mapear_vista('ver_mis_tikects')), name='ver_mis_tikects'),
+    path('tikects/mis_abiertos/', solo_clientes_permitido(mapear_vista('ver_mis_tikects_abiertos')), name='ver_mis_tikects_abiertos'),
+    path('tikects/mis_cerrados/', solo_clientes_permitido(mapear_vista('ver_mis_tikects_cerrados')), name='ver_mis_tikects_cerrados'),
+    path('tikects/crear_cliente_tikects/', solo_clientes_permitido(mapear_vista('crear_tikects_clientes')), name='crear_tikects_clientes'),
+    path('tikects/detalle/<int:tikect_id>/enviar-correo/', vistas_legado.enviar_respuesta_correo, name='enviar_respuesta_correo'),
     path('path/to/your/notification/api/', mapear_vista('check_notifications'), name='check_notifications'),
-
     # 🔑 RECUPERACIÓN DE CONTRASEÑA
     path('password_reset/', auth_views.PasswordResetView.as_view(
         template_name='registration/password_reset_form.html',

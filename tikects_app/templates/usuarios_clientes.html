@@ -1,21 +1,21 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block content %}
-<div class="container mt-5">
-    <h1 class="text-center mb-4 text-primary">
-        <i class="fas fa-users me-2"></i> Lista de Clientes
-    </h1>
-
-    <div class="mb-4 text-center">
-        <a href="{% url 'crear_cliente' %}" class="btn btn-success">
-            <i class="fas fa-plus-circle me-2"></i> Agregar Cliente
+<div class="container mt-4">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold">
+            <i class="fas fa-users me-2"></i> Gestión de Clientes EMVEPRO
+        </h2>
+        <a href="{% url 'crear_cliente' %}" class="btn btn-success shadow-sm">
+            <i class="fas fa-user-plus me-2"></i> Nuevo Cliente
         </a>
     </div>
 
+    <!-- Mensajes -->
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
                 <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} me-2"></i>
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -23,113 +23,91 @@
         {% endfor %}
     {% endif %}
 
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead class="table-success">
-                <tr>
-                    <th>#</th>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
-                    <th>Usuario</th>
-                    <th>Correo</th>
-                    <th>Gerencia</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for cliente in page_obj %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    
-                    <td>
-                        {% with bits=cliente.nombre.split %}
-                            {{ bits.0|upper }}
-                        {% endwith %}
-                    </td>
-                    
-                    <td>
-                        {% with bits=cliente.nombre.split %}
-                            {% if bits|length > 1 %}
-                                {{ bits.1|upper }}
+    <!-- Tabla -->
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-uppercase text-muted small">
+                    <tr>
+                        <th class="ps-4">#</th>
+                        <th>Nombre Completo</th>
+                        <th>Nombre de Usuario</th>
+                        <th>Correo Electrónico</th>
+                        <th>Gerencia</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Filtro dictsort aplicado aquí para ordenar por nombre -->
+                    {% for cliente in page_obj|dictsort:"nombre" %}
+                    <tr>
+                        <td class="ps-4 text-muted">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="fw-bold">{{ cliente.nombre|upper }}</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">
+                                {{ cliente.usuario.username|default:"N/A" }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if cliente.correo %}
+                                <a href="mailto:{{ cliente.correo }}" class="text-decoration-none">{{ cliente.correo }}</a>
                             {% else %}
-                                ---
+                                <span class="text-muted fst-italic small">Sin correo</span>
                             {% endif %}
-                        {% endwith %}
-                    </td>
-                    
-                    <td>
-                        {% if cliente.correo %}
-                            {% with usuario_limpio=cliente.correo.split|join:"" %}
-                                {{ cliente.correo.split.0|slice:":-15" }}
-                            {% endwith %}
-                        {% else %}
-                            user_{{ cliente.id }}
-                        {% endif %}
-                    </td>
-                    
-                    <td>
-                        {% if cliente.correo %}
-                            {{ cliente.correo }}
-                        {% else %}
-                            <span class="text-muted">Sin correo</span>
-                        {% endif %}
-                    </td>
-                    
-                    <td>{{ cliente.gerencia }}</td>
-                    
-                    <td>
-                        <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn-sm btn-warning">
-                            <i class="fas fa-edit"></i> Editar
-                        </a>
-                        <button type="button" class="btn btn-sm btn-danger" 
-                                onclick="confirmarEliminacion({{ cliente.id }}, '{{ cliente.nombre }}')">
-                            <i class="fas fa-trash-alt"></i> Eliminar
-                        </button>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7" class="text-center">No hay clientes registrados en EMVEPRO.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                        <td>
+                            <span class="badge bg-info bg-opacity-10 text-info fw-bold">
+                                {{ cliente.gerencia.nombre|default:"Sin asignar" }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group">
+                                <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn-outline-warning btn-sm" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger btn-sm" 
+                                        onclick="confirmarEliminacion({{ cliente.id }}, '{{ cliente.nombre }}')" title="Eliminar">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            No se encontraron clientes registrados.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <nav aria-label="Page navigation">
+    <!-- Paginación -->
+    <nav class="mt-4">
         <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
-                </li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
             {% endif %}
-
-            {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                {% else %}
-                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                {% endif %}
-            {% endfor %}
-
+            <li class="page-item active"><span class="page-link shadow-sm">{{ page_obj.number }}</span></li>
             {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
-                </li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
             {% endif %}
         </ul>
     </nav>
 </div>
 
-<form id="deleteForm" method="post" style="display: none;">
-    {% csrf_token %}
-</form>
+<!-- Formulario para eliminación -->
+<form id="deleteForm" method="post" style="display: none;">{% csrf_token %}</form>
 
 <script>
-    function confirmarEliminacion(clienteId, clienteNombre) {
-        if(confirm(`¿Estás seguro de que deseas eliminar al cliente "${clienteNombre}"?`)) {
+    function confirmarEliminacion(id, nombre) {
+        if(confirm(`¿Estás seguro de eliminar al cliente "${nombre}"? Esta acción no se puede deshacer.`)) {
             var form = document.getElementById('deleteForm');
-            form.action = '{% url "eliminar_cliente" 0 %}'.replace('0', clienteId);
+            form.action = '{% url "eliminar_cliente" 0 %}'.replace('0', id);
             form.submit();
         }
     }

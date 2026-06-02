@@ -1,51 +1,55 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <div class="container mt-5">
-        <!-- Título principal -->
-        <h1 class="text-center text-success mb-4">
-            <i class="fas fa-user-plus me-2"></i> Agregar Agente a Grupo
-        </h1>
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow border-0">
+                    <div class="card-header bg-success text-white text-center py-3">
+                        <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i> Asignar Agente a Grupo</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        {% if error %}
+                            <div class="alert alert-danger shadow-sm">{{ error }}</div>
+                        {% endif %}
 
-        <!-- Mostrar mensaje de error si existe -->
-        {% if error %}
-            <div class="alert alert-danger" role="alert">
-                {{ error }}
-            </div>
-        {% endif %}
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="agente" class="form-label fw-bold">Seleccionar Agente</label>
+                                <select class="form-select" id="agente" name="agente" required>
+                                    <option value="" disabled selected>-- Elija un agente --</option>
+                                    {% for agente in agentes %}
+                                        <option value="{{ agente.id }}">
+                                            {{ agente.nombre_usuario }} - {{ agente.usuario.first_name }} {{ agente.usuario.last_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
 
-        <!-- Formulario -->
-        <form method="post" class="shadow p-4 rounded bg-light">
-            {% csrf_token %}
-            
-            <!-- Selección de Agente -->
-            <div class="mb-3">
-                <label for="agente" class="form-label">Seleccionar Agente:</label>
-                <select class="form-select" id="agente" name="agente" required>
-                    <option value="" disabled selected>-- Selecciona un agente --</option>
-                    {% for agente in agentes %}
-                        <option value="{{ agente.id }}">{{ agente.usuario.username }} ({{ agente.nombre }} {{ agente.apellido }})</option>
-                    {% endfor %}
-                </select>
-            </div>
+                            <div class="mb-4">
+                                <label for="grupo" class="form-label fw-bold">Seleccionar Grupo</label>
+                                <select class="form-select" id="grupo" name="grupo" required>
+                                    <option value="" disabled selected>-- Elija un grupo --</option>
+                                    {% for grupo in grupos %}
+                                        <option value="{{ grupo.id }}">{{ grupo.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
 
-            <!-- Selección de Grupo -->
-            <div class="mb-3">
-                <label for="grupo" class="form-label">Seleccionar Grupo:</label>
-                <select class="form-select" id="grupo" name="grupo" required>
-                    <option value="" disabled selected>-- Selecciona un grupo --</option>
-                    {% for grupo in grupos %}
-                        <option value="{{ grupo.id }}">{{ grupo.nombre }}</option>
-                    {% endfor %}
-                </select>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-save me-2"></i> Confirmar Asignación
+                                </button>
+                                <a href="{% url 'usuarios_por_grupos_agentes' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i> Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-
-            <!-- Botón de envío -->
-            <div class="text-center">
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-check-circle me-2"></i> Asignar Agente
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
 {% endblock %}

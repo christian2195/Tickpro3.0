@@ -99,6 +99,30 @@
                             </div>
                         </div>
 
+                        {% if es_agente %}
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="card bg-primary bg-opacity-10 border-primary">
+                                    <div class="card-body">
+                                        <label for="cliente_id" class="form-label fw-bold text-primary">
+                                            <i class="fas fa-user-tag me-2"></i>Crear en nombre de... (Opcional)
+                                        </label>
+                                        <select class="form-select" id="cliente_id" name="cliente_id">
+                                            <option value="">-- Ticket para mí mismo (Dejar en blanco) --</option>
+                                            {% for cliente in clientes|dictsort:"usuario.first_name" %}
+                                                <option value="{{ cliente.usuario.id }}">
+                                                    {{ cliente.usuario.first_name }} {{ cliente.usuario.last_name }} ({{ cliente.usuario.username }})
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="form-text text-dark mt-2">
+                                            <i class="fas fa-info-circle text-primary"></i> Si un usuario sin acceso al portal reportó este problema (vía telefónica o presencial), búsquelo aquí. El ticket quedará a su nombre.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                         <div class="mb-3">
                             <label for="titulo" class="form-label fw-bold">Título del Problema <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="titulo" name="titulo" 
@@ -149,11 +173,21 @@
 
 <script>
     $(document).ready(function() {
-        // Inicializar Select2 solo si el elemento select existe en el DOM (Caso Fallback)
+        // Inicializar Select2 para la gerencia (si existe)
         if ($('#gerencia').length > 0) {
             $('#gerencia').select2({
                 theme: 'bootstrap-5',
                 placeholder: "-- Seleccione o busque una gerencia --",
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        // Inicializar Select2 para el buscador de clientes de los agentes (si existe)
+        if ($('#cliente_id').length > 0) {
+            $('#cliente_id').select2({
+                theme: 'bootstrap-5',
+                placeholder: "-- Ticket para mí mismo (Dejar en blanco) --",
                 allowClear: true,
                 width: '100%'
             });

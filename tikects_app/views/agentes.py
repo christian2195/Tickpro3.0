@@ -1,11 +1,27 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, View
 from django.db.models import Q, Count
 from tikects_app.models import Tickets, Agentes, Notificaciones
 from .core import AgenteRequiredMixin
 from datetime import datetime
+from django.contrib.auth.mixins import UserPassesTestMixin
+from tikects_app.models import Agentes
 
+class AgenteRequiredMixin(UserPassesTestMixin):
+    """
+    Mixin que permite el acceso SOLO a Superusuarios o a usuarios 
+    que tengan un perfil registrado en la tabla Agentes.
+    """
+    def test_func(self):
+        # Si es superusuario, pasa directo
+        if self.request.user.is_superuser:
+            return True
+            
+        # Si no es superusuario, verificamos si existe en la tabla Agentes
+        es_agente = Agentes.objects.filter(usuario=self.request.user).exists()
+        return es_agente
+    
 class DashboardSoporteView(LoginRequiredMixin, AgenteRequiredMixin, ListView):
     model = Tickets
     template_name = 'pagina_principal.html'

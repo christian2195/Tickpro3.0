@@ -1,3 +1,4 @@
+from tikects_app.decoradores import solo_clientes_permitido
 from django.shortcuts import render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, View
