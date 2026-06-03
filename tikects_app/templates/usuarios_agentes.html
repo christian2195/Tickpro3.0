@@ -52,7 +52,7 @@
                         <td class="small text-muted">{{ agente.fecha_creacion|date:"d/m/y H:i" }}</td>
                         <td>
                             <div class="btn-group">
-                                <a href="{% url 'editar_agente' agente.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-2">Editar</a>
+                                <a href="{% url 'editar_agente_antiguo' agente.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-2">Editar</a>
                                 <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" 
                                         onclick="confirmarEliminacion({{ agente.id }}, '{{ agente.nombre_usuario }}')">Eliminar</button>
                             </div>

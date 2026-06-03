@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Editar Permisos | Tickpro 3.0{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="glass-card shadow-lg p-0" style="max-width: 500px; width: 100%; overflow: hidden;">
+        <div class="p-4 text-center" style="background-color: #1e293b; color: #f8fafc;">
+            <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>Editar Permisos</h5>
+        </div>
+        
+        <div class="p-4">
+            <div class="text-center mb-4 pb-3 border-bottom">
+                <h4 class="fw-bold text-dark mb-1">{{ agente.nombre|default:"Agente" }} {{ agente.apellido|default:"" }}</h4>
+                <p class="text-muted small mb-0"><i class="fas fa-at me-1"></i>{{ agente.usuario.username }}</p>
+                <p class="text-muted small"><i class="fas fa-envelope me-1"></i>{{ agente.usuario.email|default:"Sin correo registrado" }}</p>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-dark">Nivel de Acceso en el Sistema:</label>
+                    <select name="rol_sistema" class="form-select rounded-pill shadow-sm">
+                        <option value="agente" {% if not agente.usuario.is_staff and not agente.usuario.is_superuser %}selected{% endif %}>
+                            Agente Estándar (Solo gestión de tickets)
+                        </option>
+                        <option value="staff" {% if agente.usuario.is_staff and not agente.usuario.is_superuser %}selected{% endif %}>
+                            Staff (Acceso al panel administrativo)
+                        </option>
+                        <option value="superusuario" {% if agente.usuario.is_superuser %}selected{% endif %}>
+                            Superusuario (Control Total)
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-check form-switch mb-4">
+                    <input class="form-check-input" type="checkbox" name="is_active" id="isActive" {% if agente.usuario.is_active %}checked{% endif %}>
+                    <label class="form-check-label small text-muted fw-bold" for="isActive">
+                        Cuenta Activa (Permitir que el usuario inicie sesión)
+                    </label>
+                </div>
+                
+                <div class="d-flex gap-2 mt-4">
+                    <a href="{% url 'panel_permisos_roles' %}" class="btn btn-outline-secondary rounded-pill w-50 fw-bold">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary rounded-pill w-50 fw-bold shadow-sm">
+                        <i class="fas fa-save me-2"></i>Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

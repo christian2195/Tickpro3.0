@@ -1,11 +1,12 @@
-from django import views
 from django.urls import path, include
 from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 from tikects_app import vistas_legado
 from tikects_app.views import core, clientes, agentes, admin
-# Busca esta línea al principio del archivo y cámbiala por:
+
+# IMPORTANTE: Aquí importamos tus nuevas vistas de configuración
 from . import vistas_configuracion as views
+
 # 🔒 IMPORTAMOS EL ESCUDO DE SEGURIDAD
 from tikects_app.decoradores import solo_clientes_permitido
 
@@ -66,10 +67,6 @@ urlpatterns = [
     path('configuracion/colas/editar/<int:cola_id>/', mapear_vista('editar_cola'), name='editar_cola'),
     path('configuracion/colas/eliminar/<int:cola_id>/', mapear_vista('eliminar_cola'), name='eliminar_cola'),
 
-    #path('configuracion/respuestas/', mapear_vista('tikects_respuestas_automaticas'), name='tikects_respuestas_automaticas'),
-    #path('configuracion/respuestas/crear/', mapear_vista('tikects_respuestas_automaticas_crear'), name='tikects_respuestas_automaticas_crear'),
-    #path('configuracion/respuestas/eliminar/<int:respuesta_id>/', mapear_vista('eliminar_respuesta_automatica'), name='eliminar_respuesta_automatica'),
-
     # MANTENIMIENTOS CRUD: CLIENTES, GRUPOS Y GERENCIAS
     path('configuracion/registrar/', mapear_vista('registrar_usuarios'), name='registrar_usuarios'),
     path('inicio/clientes/ver/', mapear_vista('clientes'), name='ver_cliente'),
@@ -94,13 +91,17 @@ urlpatterns = [
     path('usuario/agente_generico/', mapear_vista('agente_generico'), name='agente_generico'),
     path('asignaciones/eliminar/<int:asignacion_id>/', mapear_vista('eliminar_asignacion'), name='eliminar_asignacion'),
     
-    # ⚠️ VISTA DE PERMISOS: SIN PROTECCIÓN DE CLIENTES (Para que tú puedas entrar)
-    path('usuarios/permisos', mapear_vista('panel_permisos_roles'), name='panel_permisos_roles'),
+    # ✅ CORRECCIONES APLICADAS AQUÍ (Rutas de configuración nuevas):
+    path('configuracion/permisos/', views.gestionar_permisos, name='panel_permisos_roles'),
+    path('configuracion/editar-agente/<int:agente_id>/', views.editar_agente, name='config_editar_agente'),
+    
+    # ⚠️ VISTA DE PERMISOS ANTIGUA: (Se le cambió el name a '_old' para que no choque con la nueva)
+    path('usuarios/permisos', mapear_vista('panel_permisos_roles'), name='panel_permisos_roles_old'),
     path('usuarios/permisos/actualizar/<int:usuario_id>/', mapear_vista('actualizar_rol_usuario'), name='actualizar_rol_usuario'),
     
-    path('grupos_agentes/editar/<int:grupo_id>/', vistas_legado.editar_grupo, name='editar_grupo'),
-    path('grupos_agentes/eliminar/<int:grupo_id>/', vistas_legado.usuariops_grupo_agentes_eliminar, name='eliminar_grupo_agentes'),
-    path('grupos_agentes/eliminar_del_grupo/<int:grupo_agente_id>/', vistas_legado.eliminar_agente_de_grupo, name='eliminar_agente_de_grupo'),
+    path('grupos_agentes/editar/<int:grupo_id>/', vistas_legado.editar_grupo, name='editar_grupo_agentes'),
+    path('grupos_agentes/eliminar/<int:grupo_id>/', vistas_legado.usuariops_grupo_agentes_eliminar, name='eliminar_grupo_agentes2'),
+    path('grupos_agentes/eliminar_del_grupo/<int:grupo_agente_id>/', vistas_legado.eliminar_agente_de_grupo, name='eliminar_agente_de_grupo2'),
     
     # IMPORTACIÓN Y EXPORTACIÓN MASIVA
     path('registrar-tickets/', mapear_vista('registrar_tickets_excel'), name='registrar_tickets'),
@@ -115,9 +116,11 @@ urlpatterns = [
     
     path('tikects/ver_todos/cerrados/', mapear_vista('ver_tikects_cerrados'), name='ver_tikects_cerrados'),
     path('tikects/ver_todos/abiertos/', mapear_vista('ver_tikects_abiertos'), name='ver_tikects_abiertos'),
-    # Ejemplo de cómo debería lucir en urls.py
+    
+    # RUTAS DE RESPUESTAS AUTOMÁTICAS
     path('configuracion/respuestas/crear/', views.crear_respuesta, name='tickets_repuesta_automaticas_crear'),
     path('configuracion/respuestas/lista/', views.lista_respuestas, name='tickets_repuesta_automaticas_lista'),
+    
     # 🔄 RUTAS DE BANDEJA DE AGENTES CORREGIDAS
     path('tikects/asignados_agentes/', mapear_vista('ver_tikects_asignados_agentes'), name='ver_tikects_asignados_agentes'),
     path('tikects/asignados_agentes/abiertos/', mapear_vista('ver_tikects_asignados_agentes_abiertos'), name='ver_tikects_asignados_agentes_abiertos'),
@@ -128,7 +131,7 @@ urlpatterns = [
     path('clientes/eliminar/<int:cliente_id>/', mapear_vista('eliminar_cliente'), name='eliminar_cliente'),
     path('gerencias/editar/<int:gerencia_id>/', mapear_vista('editar_gerencia'), name='editar_gerencia'),
     path('gerencias/eliminar/<int:gerencia_id>/', mapear_vista('eliminar_gerencia'), name='eliminar_gerencia'),
-    path('agentes/editar/<int:agente_id>/', mapear_vista('editar_agente'), name='editar_agente'),
+    path('agentes/editar/<int:agente_id>/', mapear_vista('editar_agente'), name='editar_agente_antiguo'),
     path('agentes/eliminar/<int:agente_id>/', mapear_vista('eliminar_agente'), name='eliminar_agente'),
 
     # VISTAS DE CLIENTES PROTEGIDAS DIRECTAMENTE EN EL ENRUTADOR
@@ -138,6 +141,7 @@ urlpatterns = [
     path('tikects/crear_cliente_tikects/', solo_clientes_permitido(mapear_vista('crear_tikects_clientes')), name='crear_tikects_clientes'),
     path('tikects/detalle/<int:tikect_id>/enviar-correo/', vistas_legado.enviar_respuesta_correo, name='enviar_respuesta_correo'),
     path('path/to/your/notification/api/', mapear_vista('check_notifications'), name='check_notifications'),
+    
     # 🔑 RECUPERACIÓN DE CONTRASEÑA
     path('password_reset/', auth_views.PasswordResetView.as_view(
         template_name='registration/password_reset_form.html',

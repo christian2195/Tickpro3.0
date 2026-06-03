@@ -909,18 +909,48 @@ def reasignar_tikect(request, tikect_id):
         
         try:
             nuevo_agente = Agentes.objects.get(id=nuevo_agente_id)
+            
+            # 1. Guardar la reasignación en la BD
             ReasignacionTikects.objects.create(
                 tikect=ticket,
                 agente_anterior=agente_actual,
                 agente_nuevo=nuevo_agente
             )
+            
+            # 2. Generar la alerta interna (Campanita)
             Notificaciones.objects.create(
                 tikect=ticket,
                 agente=nuevo_agente,
                 descripcion=f"Ticket reasignado desde {agente_actual.nombre_usuario}"
             )
+
+            # 3. Disparar el correo electrónico al nuevo agente
+            try:
+                if nuevo_agente.usuario and nuevo_agente.usuario.email:
+                    # Capturamos la prioridad de forma segura
+                    prioridad_txt = ticket.prioridad.upper() if hasattr(ticket, 'prioridad') and ticket.prioridad else 'NO DEFINIDA'
+                    
+                    mensaje_reasignacion = (
+                        f"Se te ha reasignado un nuevo ticket.<br><br>"
+                        f"<b>Agente anterior:</b> {agente_actual.nombre_usuario}<br>"
+                        f"<b>Prioridad:</b> {prioridad_txt}<br><br>"
+                        f"Por favor, ingresa al portal de EMVEPRO para atender este requerimiento."
+                    )
+                    
+                    enviar_correo_profesional(
+                        ticket=ticket,
+                        asunto=f"¡NUEVA REASIGNACIÓN! Ticket #{ticket.id} - {ticket.titulo}",
+                        mensaje_cuerpo=mensaje_reasignacion,
+                        destinatario_correo=nuevo_agente.usuario.email,
+                        destinatario_nombre=nuevo_agente.nombre_usuario
+                    )
+            except Exception as email_error:
+                print(f"Error al enviar correo de reasignación al agente {nuevo_agente.nombre_usuario}: {email_error}")
+            
+            # 4. Finalizar con éxito
             messages.success(request, f"Ticket reasignado exitosamente a {nuevo_agente.nombre_usuario}")
             return redirect('ver_tikects_asignados_agentes')
+            
         except Exception as e:
             messages.error(request, f"Error al reasignar: {str(e)}")
             return redirect('reasignar_tikect', tikect_id=ticket.id)
@@ -929,7 +959,6 @@ def reasignar_tikect(request, tikect_id):
         'tikect': ticket,
         'agentes_grupo': agentes_grupo
     })
-
 # ============================================
 # TICKETS - VISTAS PARA CLIENTES (CORREGIDAS)
 # ============================================
@@ -1327,11 +1356,20 @@ def permisos(request):
 
 def check_notifications(request):
     if request.user.is_authenticated:
-        agente = getattr(request.user, 'agente', None)
+        # Búsqueda segura para evitar el error RelatedObjectDoesNotExist
+        agente = Agentes.objects.filter(usuario=request.user).first()
+        
         if agente:
             nuevas = Notificaciones.objects.filter(agente=agente, leida=False)
-            notificaciones = [{'tikect_id': n.tikect.id, 'descripcion': n.descripcion} for n in nuevas]
-            return JsonResponse({'new_notifications': nuevas.exists(), 'notifications': notificaciones})
+            notificaciones = [
+                {'tikect_id': n.tikect.id, 'descripcion': n.descripcion} 
+                for n in nuevas
+            ]
+            return JsonResponse({
+                'new_notifications': nuevas.exists(), 
+                'notifications': notificaciones
+            })
+            
     return JsonResponse({'new_notifications': False, 'notifications': []})
 
 # ============================================
@@ -1635,26 +1673,33 @@ def get_ssl_context():
     context.verify_mode = ssl.CERT_NONE
     return context
 
-# Esta es la lógica que ahora usará el correo automático Y el manual
-def enviar_correo_profesional(ticket, asunto, mensaje_cuerpo, plantilla='email_ticket.html'):
-    if not ticket.usuario or not ticket.usuario.email:
+# 🛠️ MEJORA: Ahora acepta nombre y correo opcionales para notificar a agentes
+def enviar_correo_profesional(ticket, asunto, mensaje_cuerpo, plantilla='email_ticket.html', destinatario_correo=None, destinatario_nombre=None):
+    
+    # 1. Definir a quién va el correo (Si no se especifica, va al dueño del ticket)
+    correo_final = destinatario_correo or (ticket.usuario.email if ticket.usuario else None)
+    nombre_final = destinatario_nombre or (ticket.usuario.first_name if ticket.usuario else "Usuario")
+
+    if not correo_final:
         return
 
-    # Renderizamos tu plantilla HTML
+    # 2. Renderizamos tu plantilla HTML de EMVEPRO
     context_html = {
-        'saludo': f"Hola {ticket.usuario.first_name},",
+        'saludo': f"Hola {nombre_final},",
         'mensaje_cuerpo': mensaje_cuerpo,
         'ticket': ticket
     }
     
     html_content = render_to_string('emails/' + plantilla, context_html)
 
+    # 3. Construcción del Mensaje
     msg = EmailMessage()
     msg['Subject'] = asunto
     msg['From'] = settings.EMAIL_HOST_USER
-    msg['To'] = ticket.usuario.email
+    msg['To'] = correo_final
     msg.add_alternative(html_content, subtype="html")
 
+    # 4. Envío Seguro
     try:
         with smtplib.SMTP_SSL(settings.EMAIL_HOST, settings.EMAIL_PORT, context=get_ssl_context()) as server:
             server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
@@ -1664,10 +1709,13 @@ def enviar_correo_profesional(ticket, asunto, mensaje_cuerpo, plantilla='email_t
 
 # --- CORREO AUTOMÁTICO AL CERRAR ---
 def enviar_correo_estado(ticket):
+    # ✅ CORRECCIÓN: Extraemos la solución real del ticket o ponemos un texto por defecto
+    solucion = ticket.descripcion_solucion if hasattr(ticket, 'descripcion_solucion') and ticket.descripcion_solucion else 'No especificada'
+    
     enviar_correo_profesional(
-        ticket, 
-        f"Ticket Cerrado: #{ticket.id} - {ticket.titulo}",
-        f"Tu ticket ha sido marcado como CERRADO. Solución: {"" or 'No especificada'}."
+        ticket=ticket, 
+        asunto=f"Ticket Cerrado: #{ticket.id} - {ticket.titulo}",
+        mensaje_cuerpo=f"Tu requerimiento ha sido marcado como CERRADO.<br><br><b>Solución aplicada:</b><br>{solucion}"
     )
 
 # --- CORREO MANUAL DESDE EL DETALLE ---
@@ -1678,9 +1726,9 @@ def enviar_respuesta_correo(request, tikect_id):
         mensaje = request.POST.get('mensaje', '').strip()
         if mensaje:
             enviar_correo_profesional(
-                ticket, 
-                f"Respuesta de Soporte EMVEPRO - Ticket #{ticket.id}", 
-                mensaje
+                ticket=ticket, 
+                asunto=f"Respuesta de Soporte EMVEPRO - Ticket #{ticket.id}", 
+                mensaje_cuerpo=mensaje
             )
             messages.success(request, "Respuesta enviada correctamente con formato profesional.")
     return redirect('detalle_tikect', tikect_id=ticket.id)
