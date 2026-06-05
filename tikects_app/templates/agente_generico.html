@@ -4,18 +4,7 @@
 {% block title %}Agente Genérico | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<style>
-    .glass-card {
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 20px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-    }
-</style>
-
 <div class="container-fluid animate__animated animate__fadeIn">
-    <!-- Encabezado -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold text-dark"><i class="fas fa-user-cog me-2 text-primary"></i> Asignación Genérica</h2>
         <nav aria-label="breadcrumb">
@@ -28,23 +17,28 @@
 
     <div class="row">
         <div class="col-md-8 mx-auto">
-            <div class="glass-card p-4">
+            <div class="card-modern p-4">
                 <h5 class="fw-bold mb-4"><i class="fas fa-cogs me-2 text-primary"></i> Parámetros de automatización</h5>
                 
                 <form method="POST" class="needs-validation" novalidate>
                     {% csrf_token %}
                     
                     <div class="row">
-                        <!-- Servicio -->
                         <div class="col-md-6 mb-3">
                             <label class="form-label small fw-bold">Servicio <span class="text-danger">*</span></label>
                             <select name="servicio" class="form-select rounded-pill" required>
                                 <option value="" disabled selected>-- Seleccione un servicio --</option>
-                                {% for s in servicios %}<option value="{{ s.id }}">{{ s.nombre }}</option>{% endfor %}
+                                {% for s in servicios %}
+                                    <option value="{{ s.id }}">
+                                        {{ s.nombre }} {% if s.configurado %}(Configurado){% endif %}
+                                    </option>
+                                {% endfor %}
                             </select>
+                            <div class="form-text small px-2 text-muted">
+                                * Nota: Seleccionar un servicio ya configurado sobrescribirá la regla.
+                            </div>
                         </div>
 
-                        <!-- Agente Actual -->
                         <div class="col-md-6 mb-3">
                             <label class="form-label small fw-bold">Agente Actual <span class="text-danger">*</span></label>
                             <select name="agente_actual" class="form-select rounded-pill" required>
@@ -53,7 +47,6 @@
                             </select>
                         </div>
 
-                        <!-- Agente Reasignación -->
                         <div class="col-md-6 mb-3">
                             <label class="form-label small fw-bold">Agente de Reasignación</label>
                             <select name="agente_reasignacion" class="form-select rounded-pill">
@@ -62,7 +55,6 @@
                             </select>
                         </div>
 
-                        <!-- Tiempo -->
                         <div class="col-md-6 mb-3">
                             <label class="form-label small fw-bold">Tiempo de Reasignación</label>
                             <select name="tiempo_reasignacion" class="form-select rounded-pill">

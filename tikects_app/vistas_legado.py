@@ -1296,10 +1296,26 @@ def exportar_tikects_pdf(request):
 @login_required
 def agente_generico(request):
     if request.method == 'GET':
-        servicios_asignados = AgenteGenerico.objects.values_list('servicio_id', flat=True)
-        servicios = Tickets_Servicios.objects.exclude(id__in=servicios_asignados)
-        agentes = Agentes.objects.all()
-        return render(request, 'agente_generico.html', {'servicios': servicios, 'agentes': agentes})
+        # 1. Obtenemos los IDs de servicios que YA tienen configuración
+        servicios_configurados = AgenteGenerico.objects.values_list('servicio_id', flat=True)
+        
+        # 2. Traemos todos los servicios
+        servicios = Tickets_Servicios.objects.all().order_by('nombre')
+        agentes = Agentes.objects.all().select_related('usuario')
+        
+        # 3. Preparamos una lista enriquecida para el template
+        lista_servicios = []
+        for s in servicios:
+            lista_servicios.append({
+                'id': s.id,
+                'nombre': s.nombre,
+                'configurado': s.id in servicios_configurados
+            })
+        
+        return render(request, 'agente_generico.html', {
+            'servicios': lista_servicios, # Pasamos la lista enriquecida
+            'agentes': agentes
+        })
     else:
         servicio_id = request.POST.get('servicio')
         agente_actual_id = request.POST.get('agente_actual')
@@ -1316,16 +1332,19 @@ def agente_generico(request):
             agente_reasignacion = Agentes.objects.get(id=agente_reasignacion_id) if agente_reasignacion_id else None
             tiempo = int(tiempo_reasignacion) if tiempo_reasignacion else None
             
-            AgenteGenerico.objects.create(
+            # Operación segura: Crea si no existe, actualiza si ya existe
+            AgenteGenerico.objects.update_or_create(
                 servicio=servicio,
-                agente_actual=agente_actual,
-                tiempo_reasignacion=tiempo,
-                agente_reasignacion=agente_reasignacion
+                defaults={
+                    'agente_actual': agente_actual,
+                    'tiempo_reasignacion': tiempo,
+                    'agente_reasignacion': agente_reasignacion
+                }
             )
-            messages.success(request, "Asignación de agente genérico completada.")
+            messages.success(request, f"Configuración guardada exitosamente para: {servicio.nombre}")
             return redirect('ver_agentes_genericos')
         except Exception as e:
-            messages.error(request, f"Error: {e}")
+            messages.error(request, f"Error al guardar la asignación: {e}")
             return redirect('agente_generico')
 
 @superuser_required

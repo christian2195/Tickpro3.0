@@ -15,6 +15,17 @@
         border-radius: 20px;
         box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
     }
+
+    /* Adaptación de Select2 al Modo Oscuro */
+    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection,
+    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-dropdown,
+    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-search__field {
+        background-color: #1e293b !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        color: #f8fafc !important;
+    }
+    [data-bs-theme="dark"] .select2-results__option { color: #f8fafc !important; }
+    [data-bs-theme="dark"] .select2-results__option--highlighted { background-color: #0d6efd !important; }
 </style>
 
 <div class="container-fluid animate__animated animate__fadeIn">
@@ -31,7 +42,7 @@
 
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="glass-card p-4">
+            <div class="card-modern p-4">
                 <h5 class="fw-bold mb-4"><i class="fas fa-layer-group me-2 text-primary"></i> Modificar datos y agentes</h5>
                 
                 <form method="post" class="needs-validation" novalidate>
@@ -74,7 +85,11 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('.select2-agentes').select2({ theme: 'bootstrap-5', placeholder: "Selecciona agentes..." });
+        $('.select2-agentes').select2({ 
+            theme: 'bootstrap-5', 
+            placeholder: "Selecciona agentes...",
+            allowClear: true 
+        });
     });
 </script>
 {% endblock %}

@@ -1,112 +1,67 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Agentes Genéricos | Tickpro 3.0{% endblock %}
+{% block title %}Asignaciones Genéricas | Tickpro 3.0{% endblock %}
 
 {% block content %}
-<style>
-    .glass-card {
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 20px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-    }
-    .table-modern { border-collapse: separate; border-spacing: 0 10px; }
-    .table-modern tbody tr { background: white; border-radius: 12px; }
-    .table-modern tbody td { padding: 15px; border: none; }
-</style>
-
 <div class="container-fluid animate__animated animate__fadeIn">
-    <!-- Encabezado -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-dark"><i class="fas fa-users-cog me-2 text-primary"></i> Agentes Genéricos</h2>
-        <a href="{% url 'agente_generico' %}" class="btn btn-success rounded-pill px-4 shadow-sm">
-            <i class="fas fa-plus-circle me-1"></i> Nueva Asignación
+        <h2 class="fw-bold text-dark"><i class="fas fa-robot me-2 text-primary"></i> Asignaciones Genéricas</h2>
+        <a href="{% url 'agente_generico' %}" class="btn btn-primary rounded-pill shadow-sm px-4">
+            <i class="fas fa-plus me-2"></i> Nueva Configuración
         </a>
     </div>
 
-    <!-- Tabla -->
-    <div class="glass-card p-4">
+    <div class="card-modern p-4">
         <div class="table-responsive">
-            <table class="table table-modern align-middle" id="agentesGenTable">
-                <thead class="text-muted small text-uppercase">
-                    <tr><th>#</th><th>Servicio</th><th>Agente Actual</th><th>Reasignación</th><th>Tiempo (min)</th><th>Acciones</th></tr>
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr class="text-muted small text-uppercase">
+                        <th>Servicio</th>
+                        <th>Agente Actual</th>
+                        <th>Reasignar a</th>
+                        <th>Tiempo</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
                 </thead>
                 <tbody>
-                    {% for asignacion in asignaciones %}
+                    {% for a in asignaciones %}
                     <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td><strong class="text-dark">{{ asignacion.servicio.nombre }}</strong></td>
+                        <td class="fw-bold text-dark">{{ a.servicio.nombre }}</td>
+                        <td>{{ a.agente_actual.usuario.username }}</td>
                         <td>
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-user-tie text-primary me-2"></i>
-                                <div>
-                                    <div class="fw-bold">{{ asignacion.agente_actual.nombre_usuario }}</div>
-                                    <small class="text-muted">{{ asignacion.agente_actual.nombre }}</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            {% if asignacion.agente_reasignacion %}
-                                <span class="badge bg-warning text-dark rounded-pill">{{ asignacion.agente_reasignacion.nombre_usuario }}</span>
+                            {% if a.agente_reasignacion %}
+                                <span class="badge bg-info bg-opacity-10 text-info rounded-pill">{{ a.agente_reasignacion.usuario.username }}</span>
                             {% else %}
-                                <span class="text-muted small">No configurado</span>
+                                <span class="text-muted italic small">Ninguno</span>
                             {% endif %}
                         </td>
                         <td>
-                            {% if asignacion.tiempo_reasignacion %}
-                                <span class="badge bg-info text-white rounded-pill">{{ asignacion.tiempo_reasignacion }} min</span>
+                            {% if a.tiempo_reasignacion %}
+                                <i class="fas fa-clock me-1 text-primary"></i> {{ a.tiempo_reasignacion }} min
                             {% else %}
-                                <span class="text-muted">-</span>
+                                <span class="text-muted small">N/A</span>
                             {% endif %}
                         </td>
-                        <td>
-                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" 
-                                    data-bs-toggle="modal" data-bs-target="#confirmModal" 
-                                    data-id="{{ asignacion.id }}" data-servicio="{{ asignacion.servicio.nombre }}">
-                                <i class="fas fa-trash-alt me-1"></i> Eliminar
-                            </button>
+                        <td class="text-center">
+                            <form action="{% url 'eliminar_asignacion' a.id %}" method="POST" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle" title="Eliminar" onclick="return confirm('¿Seguro que deseas eliminar esta configuración?')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="6" class="text-center py-4 text-muted">No hay asignaciones configuradas.</td></tr>
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            No hay configuraciones genéricas registradas.
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
-
-<!-- Modal de Eliminación -->
-<div class="modal fade" id="confirmModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header bg-danger text-white border-0">
-                <h5 class="modal-title">Confirmar eliminación</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body py-4 text-center">
-                ¿Eliminar la configuración para el servicio <strong id="servicioNombre"></strong>?
-            </div>
-            <div class="modal-footer border-0 justify-content-center">
-                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                <form id="deleteForm" method="post" class="d-inline">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger rounded-pill px-4">Eliminar</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    var confirmModal = document.getElementById('confirmModal');
-    confirmModal.addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget;
-        document.getElementById('servicioNombre').textContent = button.getAttribute('data-servicio');
-        var deleteForm = document.getElementById('deleteForm');
-        deleteForm.action = '{% url "eliminar_asignacion" 0 %}'.replace('0', button.getAttribute('data-id'));
-    });
-</script>
 {% endblock %}
