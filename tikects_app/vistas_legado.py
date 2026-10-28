@@ -543,7 +543,7 @@ def eliminar_agente_de_grupo(request, grupo_agente_id):
 
 @login_required
 def editar_grupo(request, grupo_id):
-    grupo = get_object_or_404(Grupos_Agentes, id=grupo_id)
+    grupo = get_object_or_404(Grupos_Agentes, id=id)
     if request.method == 'POST':
         grupo.nombre = request.POST.get('nombre')
         grupo.descripcion = request.POST.get('descripcion')
