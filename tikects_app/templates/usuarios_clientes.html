@@ -5,22 +5,28 @@
 
 {% block content %}
 <style>
-    .glass-card {
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 20px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-    }
+    /* Estilos específicos de la tabla adaptados al manual de marca y modo oscuro */
     .table-modern { border-collapse: separate; border-spacing: 0 10px; }
-    .table-modern tbody tr { background: white; border-radius: 12px; }
-    .table-modern tbody td { padding: 15px; border: none; }
+    .table-modern tbody tr { 
+        background: #ffffff; 
+        border-radius: 12px; 
+        box-shadow: 0 2px 4px rgba(39, 51, 118, 0.05); /* Sombra suave utilizando el Azul Marino institucional */
+        transition: background 0.3s, box-shadow 0.3s;
+    }
+    .table-modern tbody td { padding: 15px; border: none; vertical-align: middle; }
+    
+    /* El modo oscuro para las filas hereda de base.html, pero reforzamos la protección de fondo local */
+    [data-bs-theme="dark"] .table-modern tbody tr { 
+        background: rgba(30, 41, 59, 0.95); 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
 </style>
 
 <div class="container-fluid animate__animated animate__fadeIn">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold text-dark"><i class="fas fa-users me-2 text-primary"></i> Gestión de Clientes</h2>
-        <a href="{% url 'crear_cliente' %}" class="btn btn-success rounded-pill px-4 shadow-sm">
+        <!-- Botón principal alineado al Azul Marino institucional -->
+        <a href="{% url 'crear_cliente' %}" class="btn btn-primary rounded-pill px-4 shadow-sm">
             <i class="fas fa-user-plus me-1"></i> Nuevo Cliente
         </a>
     </div>
@@ -31,30 +37,50 @@
         {% endfor %}
     {% endif %}
 
-    <div class="glass-card p-4">
+    <!-- Reemplazo de glass-card por card-modern para heredar estilos corporativos de base.html -->
+    <div class="card-modern p-4">
         <div class="table-responsive">
             <table class="table table-modern align-middle" id="clientesTable">
                 <thead class="text-muted small text-uppercase">
-                    <tr><th>#</th><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Gerencia</th><th>Acciones</th></tr>
+                    <tr><th>#</th><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Gerencia</th><th class="text-center">Acciones</th></tr>
                 </thead>
                 <tbody>
                     {% for cliente in page_obj|dictsort:"nombre" %}
                     <tr>
-                        <td>{{ forloop.counter }}</td>
+                        <td class="text-muted fw-bold">{{ forloop.counter }}</td>
                         <td><strong class="text-dark">{{ cliente.nombre|upper }}</strong></td>
-                        <td><span class="badge rounded-pill bg-light text-dark border">{{ cliente.usuario.username|default:"N/A" }}</span></td>
-                        <td class="text-muted small">{{ cliente.correo|default:"Sin correo" }}</td>
-                        <td><span class="badge rounded-pill bg-info bg-opacity-10 text-info px-3">{{ cliente.gerencia.nombre|default:"Sin asignar" }}</span></td>
                         <td>
+                            <span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle">
+                                <i class="fas fa-user-circle me-1"></i> {{ cliente.usuario.username|default:"N/A" }}
+                            </span>
+                        </td>
+                        <td class="text-muted small">{{ cliente.correo|default:"Sin correo" }}</td>
+                        <td>
+                            <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary px-3 border border-primary-subtle">
+                                {{ cliente.gerencia.nombre|default:"Sin asignar" }}
+                            </span>
+                        </td>
+                        <td class="text-center">
                             <div class="btn-group">
-                                <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn-sm btn-outline-warning rounded-pill px-3 me-2">Editar</a>
+                                <!-- Botón de edición alineado al Amarillo Oro -->
+                                <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn-sm btn-outline-warning rounded-pill px-3 me-2" title="Editar">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <!-- Botón de eliminación alineado al Rojo Carmesí -->
                                 <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" 
-                                        onclick="confirmarEliminacion({{ cliente.id }}, '{{ cliente.nombre }}')">Eliminar</button>
+                                        onclick="confirmarEliminacion({{ cliente.id }}, '{{ cliente.nombre }}')" title="Eliminar">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="6" class="text-center py-4 text-muted">No hay clientes registrados.</td></tr>
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fas fa-users-slash fa-2x mb-3 d-block opacity-50"></i>
+                            No hay clientes registrados actualmente.
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
