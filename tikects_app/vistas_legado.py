@@ -565,12 +565,38 @@ def editar_grupo(request, grupo_id):
 @superuser_required
 @login_required
 def clientes(request):
-    # 🔑 Le quitamos 'usuario' porque el modelo no tiene esa llave directa
-    clientes_list = Cliente.objects.select_related('gerencia').all().order_by('nombre')
+    """Vista de clientes con soporte para búsqueda (Q) y ordenamiento alfabético"""
+    
+    # 1. Obtener parámetros de la URL enviados por el formulario HTML
+    query = request.GET.get('q', '').strip()
+    sort = request.GET.get('sort', 'asc')
+    
+    # 2. Consulta base optimizada
+    clientes_list = Cliente.objects.select_related('gerencia').all()
+    
+    # 3. Aplicar Filtro de Búsqueda si el usuario ingresó texto ('q')
+    if query:
+        clientes_list = clientes_list.filter(
+            Q(nombre__icontains=query) |
+            Q(usuario__username__icontains=query) |
+            Q(correo__icontains=query) |
+            Q(gerencia__nombre__icontains=query)
+        )
+        
+    # 4. Aplicar Ordenamiento Alfabético (Ascendente o Descendente)
+    if sort == 'desc':
+        clientes_list = clientes_list.order_by('-nombre')
+    else:
+        clientes_list = clientes_list.order_by('nombre')
+        
+    # 5. Paginación manteniendo 10 registros por página
     paginator = Paginator(clientes_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    return render(request, 'usuarios_clientes.html', {'page_obj': page_obj})
+    
+    return render(request, 'usuarios_clientes.html', {
+        'page_obj': page_obj
+    })
 
 @superuser_required
 @login_required
